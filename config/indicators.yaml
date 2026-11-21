@@ -1,0 +1,99 @@
+# MVP indicator registry. Every series the app shows must be listed here.
+# source_series: the code the source uses (FRED id, RBI table, etc.). "TBD" = to be mapped in Phase 1.
+
+- id: us_policy_rate
+  country: US
+  name: Fed funds target range, upper bound
+  source: FRED
+  source_series: DFEDTARU
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DFEDTARU
+
+- id: us_cpi
+  country: US
+  name: CPI-U, all items, seasonally adjusted
+  source: FRED
+  source_series: CPIAUCSL
+  unit: index
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/CPIAUCSL
+
+- id: us_10y
+  country: US
+  name: 10-year Treasury constant maturity yield
+  source: FRED
+  source_series: DGS10
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DGS10
+
+- id: us_dollar_broad
+  country: US
+  name: Nominal broad US dollar index (Fed)
+  source: FRED
+  source_series: DTWEXBGS
+  unit: index
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DTWEXBGS
+
+- id: brent
+  country: GLOBAL
+  name: Brent crude spot price
+  source: FRED
+  source_series: DCOILBRENTEU
+  unit: usd_per_barrel
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DCOILBRENTEU
+
+# Observed daily from the RBI home page; a row is stored only when the rate changes.
+# Dates are observation dates, not MPC effective dates. History before the first run: TODO.
+- id: in_repo_rate
+  country: IN
+  name: RBI policy repo rate
+  source: RBI
+  source_series: "homepage:Policy Repo Rate"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
+
+# 2024-base CPI, live series (Jan 2025 onwards). state 1 = All India, sector 3 = Combined,
+# division 0 = CPI (General). Never spliced with the 2012-base series.
+- id: in_cpi_2024base
+  country: IN
+  name: All-India CPI combined, general index (base 2024=100)
+  source: MoSPI
+  source_series: "getCPIData?base_year=2024&series=Current&state_code=1&sector_code=3&division_code=0"
+  unit: index
+  frequency: monthly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+# MoSPI's official back series on the 2024 base (2013-2024). Kept separate from the live series.
+- id: in_cpi_2024base_back
+  country: IN
+  name: All-India CPI combined, general index (base 2024=100), official back series
+  source: MoSPI
+  source_series: "getCPIData?base_year=2024&series=Back&state_code=1&sector_code=3&division_code=0"
+  unit: index
+  frequency: monthly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+# FBIL par yield at the 10-year tenor (semi-annual YTM), from the daily G-sec valuation file.
+# This is a curve point, not the yield of a specific benchmark bond.
+- id: in_10y
+  country: IN
+  name: India 10-year G-sec par yield (FBIL, semi-annual)
+  source: FBIL
+  source_series: "gsec_par:10"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: inr_usd
+  country: IN
+  name: INR per USD, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 1 USD"
+  unit: inr_per_usd
+  frequency: daily
+  source_url: https://www.fbil.org.in/

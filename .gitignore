@@ -1,0 +1,19 @@
+# secrets
+.env
+# data (raw downloads and databases are rebuilt by ingestion)
+data/raw/*
+data/clean/*
+!data/clean/*.parquet
+data/logs/*
+!data/**/.gitkeep
+*.duckdb
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+# editors / OS
+.vscode/
+.idea/
+.DS_Store

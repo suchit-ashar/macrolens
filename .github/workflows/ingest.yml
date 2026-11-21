@@ -1,0 +1,49 @@
+name: Daily data ingestion
+
+on:
+  schedule:
+    - cron: "0 1 * * *"     # 01:00 UTC = 06:30 IST, every day
+  workflow_dispatch:         # adds a "Run workflow" button for manual runs
+
+permissions:
+  contents: write            # to commit updated data
+  issues: write              # to open an issue when a fetch fails
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Fetch data
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python -m ingest.run_all
+
+      - name: Commit updated data
+        if: always()
+        run: |
+          git config user.name "macrolens-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/clean/*.parquet || true
+          git diff --cached --quiet || git commit -m "Data update $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create --title "Ingestion failure $(date -u +%Y-%m-%d)" \
+            --body "Run log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
