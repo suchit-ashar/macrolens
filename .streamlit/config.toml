@@ -3,3 +3,15 @@ gatherUsageStats = false
 
 [server]
 headless = true
+
+[client]
+toolbarMode = "minimal"
+
+# Design B + C: clean finance layout (navy + India saffron), topic colours set in app.py
+[theme]
+base = "light"
+primaryColor = "#0B2545"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F5F9"
+textColor = "#0B2545"
+font = "sans serif"

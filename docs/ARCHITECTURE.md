@@ -80,9 +80,14 @@ vintages), `indicators` (registry). Views: `latest` (one row per date), `summary
 and previous value per indicator).
 
 ## Dashboard (`app/app.py`)
-Tabs, in the order users consult them: Overview, Policy rates, Currency, Bonds, Liquidity,
-Inflation, Growth, External, Fiscal, Jobs, Commodities, Data quality, Data & sources (CSV
-download, including vintages). Each chart shows source links and latest dates. Derived values
+Design B + C (approved 2026-11-22): clean finance layout (white, navy #0B2545, India saffron
+#E07B39) with a one-line summary, plus one colour per topic and rule-based traffic lights on
+cards (`analytics/signals.py`: comparisons with official targets or recent history, never
+forecasts). A country selector (India, United States, Euro area, China, Japan, Compare) drives
+the page; India has topic tabs in the order users consult them (Overview, Policy rates,
+Currency, Bonds, Liquidity, Inflation, Growth, External, Fiscal, Jobs). Sources, quality checks
+and CSV downloads sit in an "About the data" expander at the bottom. Theme in
+`.streamlit/config.toml`. Each chart shows source links and latest dates. Derived values
 (YoY %, deflator, GDP shares, spreads, real repo rate) are labelled "derived". Event series are
 drawn as steps extended to today. Charts silently skip series that are missing, so a failed
 fetch never breaks the page.
