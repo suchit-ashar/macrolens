@@ -17,6 +17,7 @@
   source_series: CPIAUCSL
   unit: index
   frequency: monthly
+  known_gaps: ["2025-11-01"]   # BLS published no October 2025 CPI (federal government shutdown)
   source_url: https://fred.stlouisfed.org/series/CPIAUCSL
 
 - id: us_10y
@@ -76,6 +77,7 @@
   source_series: "getCPIData?base_year=2024&series=Back&state_code=1&sector_code=3&division_code=0"
   unit: index
   frequency: monthly
+  expect_updates: false   # closed historical series: skip the staleness check
   source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
 
 # FBIL par yield at the 10-year tenor (semi-annual YTM), from the daily G-sec valuation file.

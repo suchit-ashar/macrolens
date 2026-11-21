@@ -6,7 +6,9 @@ Exit code 1 if any fetch fails (so GitHub Actions flags it).
 Parquet files keep every vintage (see docs/ARCHITECTURE.md rule 3); read them through
 transform.normalize.latest_vintage.
 """
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -14,9 +16,11 @@ from dotenv import load_dotenv
 
 from ingest import fbil, fred, mospi, rbi
 from ingest.registry import load_registry
+from transform.checks import run_checks, to_records
 from transform.normalize import latest_vintage, merge_vintages, to_long
 
 CLEAN_DIR = Path(__file__).resolve().parent.parent / "data" / "clean"
+LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "logs"
 
 # Every fetcher is called as fetch(source_series, since) -> (DataFrame[date, value], meta).
 # `since` is the last stored date, used by fetchers that download incrementally.
@@ -65,7 +69,29 @@ def main(only: list[str] | None = None) -> int:
 
     print(f"\n{len(done)} fetched, {len(failures)} failed, {len(skipped)} not built yet"
           + (f": {', '.join(skipped)}" if skipped else ""))
-    return 1 if failures else 0
+
+    issues = quality_report(registry, only)
+    errors = [i for i in issues if i.severity == "error"]
+    return 1 if failures or errors else 0
+
+
+def quality_report(registry: dict, only: list[str] | None = None) -> list:
+    """Run transform/checks.py on every stored series; print and save the result."""
+    issues = []
+    for entry in registry.values():
+        path = CLEAN_DIR / f"{entry['id']}.parquet"
+        if (only and entry["id"] not in only) or not path.exists():
+            continue
+        issues += run_checks(pd.read_parquet(path), entry)
+    print(f"\nQuality: {sum(i.severity == 'error' for i in issues)} error(s), "
+          f"{sum(i.severity == 'warn' for i in issues)} warning(s)")
+    for i in issues:
+        print(f"  {i.severity.upper():<5} {i.indicator_id:<22} {i.check:<9} {i.message}")
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    (LOG_DIR / "quality.json").write_text(json.dumps(
+        {"checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "issues": to_records(issues)},
+        indent=2), encoding="utf-8")
+    return issues
 
 
 if __name__ == "__main__":

@@ -10,10 +10,16 @@ Phase 1 in progress: all 10 MVP indicators have fetchers and run daily via GitHu
 - India: RBI repo rate (home page), MoSPI CPI 2024 base (live + back series), FBIL USD/INR
   reference rate and 10-year G-sec par yield. None of these need keys.
 
-Next: backfill repo-rate history before the first run (RBI press releases), quality checks
-(`transform/checks.py`), DuckDB storage.
+- Every run ends with quality checks (gaps, unusual jumps, stale or malformed series).
+- Dashboard: Streamlit app over a DuckDB cache of the Parquet files.
 
-Run one or more indicators: `python -m ingest.run_all inr_usd in_10y`
+## Everyday commands
+```bash
+python -m ingest.run_all                 # fetch everything + quality report
+python -m ingest.run_all inr_usd in_10y  # fetch selected indicators
+python -m storage.db                     # rebuild data/macrolens.duckdb and print latest values
+streamlit run app/app.py                 # open the dashboard at http://localhost:8501
+```
 
 ## Setup
 ```bash
@@ -34,7 +40,8 @@ pytest                    # all tests should pass
 | `storage/` | DuckDB database access |
 | `app/` | Streamlit dashboard |
 | `data/raw/` | Untouched downloads (audit trail, not committed) |
-| `data/clean/` | Cleaned Parquet files (not committed) |
+| `data/clean/` | Cleaned Parquet files, every vintage (committed by the daily job) |
+| `data/logs/` | `quality.json` from the last run (not committed) |
 | `tests/` | pytest tests |
 
 ## Principles
