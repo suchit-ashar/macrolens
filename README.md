@@ -4,6 +4,9 @@ A macro dashboard for investors, businesses and FDI decision-makers. It tracks o
 data for India and the US (rates, currency, bonds, liquidity, inflation, growth, external
 sector, fiscal) and updates automatically every day.
 
+**Live dashboard: https://macromonitor.streamlit.app/** (Streamlit Community Cloud; refreshes
+after each daily data commit).
+
 ## Status
 143 series, all fetched automatically every day at 07:00 IST (GitHub Actions), in the order
 users consult them: policy rates, currency, bonds, liquidity, inflation, growth, external,
