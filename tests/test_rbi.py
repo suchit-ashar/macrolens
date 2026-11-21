@@ -90,3 +90,18 @@ def test_pegged_rate_dated_from_stored_repo_change(tmp_path):
             fetched_at="2026-11-21T00:00:00").to_parquet(tmp_path / "in_repo_rate.parquet")
     assert rbi.last_repo_change(5.5, tmp_path) == pd.Timestamp("2026-10-07")
     assert rbi.last_repo_change(5.75, tmp_path) is None
+
+
+FX_BOX = """<h3>Exchange Rates</h3><table><tr><td>INR / 1 USD</td><td>: 92.9699</td></tr>
+<tr><td>INR / 100 JPY</td><td>: 58.4300</td></tr><tr><td>INR / 1 RUB*</td><td>: 1.1339</td></tr></table>
+<p>(As at 1.00pm of November 20, 2026)</p><p>*(As at 3.00pm of November 20, 2026)</p>"""
+
+
+def test_parse_homepage_fx():
+    when, rates = rbi.parse_homepage_fx(FX_BOX)
+    assert when == pd.Timestamp("2026-11-20")
+    assert rates["INR / 1 USD"] == 92.9699 and rates["INR / 100 JPY"] == 58.43 and rates["INR / 1 RUB"] == 1.1339
+
+
+def test_homepage_fx_missing_box():
+    assert rbi.parse_homepage_fx("<p>maintenance</p>") is None

@@ -44,7 +44,7 @@ def _now():
 
 
 def fetch_refrates(sub_prod: str, start: date = REFRATES_START, end: date | None = None,
-                   session=None, save_raw: bool = True):
+                   session=None, save_raw: bool = True, with_rbi_latest: bool = False):
     """Daily FBIL reference rate for one currency pair, e.g. 'INR / 1 USD'."""
     end = end or date.today()
     rows = []
@@ -65,6 +65,15 @@ def fetch_refrates(sub_prod: str, start: date = REFRATES_START, end: date | None
     df = df.dropna().drop_duplicates("date", keep="last").sort_values("date").reset_index(drop=True)
     meta = {"last_updated": max(x["displayTime"] for x in picked),
             "fetched_at": fetched_at.isoformat(timespec="seconds")}
+    if with_rbi_latest:
+        # FBIL's public feed lags about a week; the RBI home page shows the same FBIL rate the
+        # next day. Add that day if it is newer than the feed.
+        from ingest import rbi
+        latest = rbi.homepage_fx(session=session)
+        if latest and sub_prod in latest[1] and (df.empty or latest[0] > df["date"].max()):
+            df = pd.concat([df, pd.DataFrame({"date": [latest[0]], "value": [latest[1][sub_prod]]})],
+                           ignore_index=True)
+            meta["last_updated"] = f"{latest[0].date()} (via RBI home page)"
     return df, meta
 
 
@@ -161,7 +170,7 @@ def fetch_gsec_par(tenor: float, since: date | None = None, end: date | None = N
 def fetch(source_series: str, since: date | None = None, session=None):
     kind, _, arg = source_series.partition(":")
     if kind == "refrates":
-        return fetch_refrates(arg, session=session)
+        return fetch_refrates(arg, session=session, with_rbi_latest=True)
     if kind == "gsec_par":
         return fetch_gsec_par(float(arg), since=since, session=session)
     if kind in RATE_ENDPOINTS:

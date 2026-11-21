@@ -24,9 +24,11 @@ JUMP_WINDOW_DAYS = 365    # only changes in the last year are reported
 JUMP_BASELINE_DAYS = 3 * 365  # what counts as "normal" is judged on the last 3 years
 MIN_JUMP_HISTORY = 40     # need this many observations to judge what is "unusual"
 # Price levels that cannot be negative; FDI, balances and growth rates can be.
-NON_NEGATIVE_UNITS = {"index", "inr_per_usd", "inr", "cny", "usd_per_barrel", "usd_per_eur", "eur_million"}
+NON_NEGATIVE_UNITS = {"index", "inr_per_usd", "inr", "cny", "jpy", "usd_per_barrel", "usd_per_eur", "eur_million",
+                      "jpy_billion"}
 # Levels whose moves are judged in % terms; rates, ratios and near-zero flows use absolute changes.
-PCT_CHANGE_UNITS = {"index", "inr_per_usd", "inr", "cny", "usd_per_barrel", "usd_million", "eur_million"}
+PCT_CHANGE_UNITS = {"index", "inr_per_usd", "inr", "cny", "jpy", "usd_per_barrel", "usd_million", "eur_million",
+                    "jpy_billion", "usd_per_eur"}
 
 
 @dataclass

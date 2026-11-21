@@ -52,6 +52,39 @@ def parse_rate(html: str, label: str) -> float:
     return value
 
 
+FX_ASAT = re.compile(r"\(As at ([0-9.]+\s*[ap]m) of ([A-Z][a-z]+ \d{1,2}, \d{4})\)")
+_home_memo: dict = {}
+
+
+def parse_homepage_fx(html: str) -> tuple[pd.Timestamp, dict[str, float]] | None:
+    """Reference rates in the home page "Exchange Rates" box, e.g. {'INR / 1 USD': 92.9699}.
+
+    These are FBIL reference rates, shown here the next day, about a week before FBIL's own
+    public feed. Returns (as-at date, rates) or None if the box is missing.
+    """
+    text = _text(html)
+    start = text.find("Exchange Rates")
+    if start < 0:
+        return None
+    box = text[start:start + 600]
+    when = FX_ASAT.search(box)
+    if not when:
+        return None
+    rates = {f"INR / {n} {c}": float(v) for n, c, v in
+             re.findall(r"INR / (\d+) ([A-Z]{3})\*?\s*:\s*([0-9]+(?:\.[0-9]+)?)", box[:when.start()])}
+    return pd.Timestamp(pd.to_datetime(when.group(2)).date()), rates
+
+
+def homepage_fx(session=None) -> tuple[pd.Timestamp, dict[str, float]] | None:
+    """Fetch (once per process) and parse the home page exchange-rate box; None on any failure."""
+    if "fx" not in _home_memo:
+        try:
+            _home_memo["fx"] = parse_homepage_fx(get(HOME, session=session).text)
+        except FetchError:
+            _home_memo["fx"] = None
+    return _home_memo["fx"]
+
+
 def list_mpc_releases(html: str) -> list[str]:
     """Absolute URLs of MPC-related releases in the press-release list, newest first."""
     out = []

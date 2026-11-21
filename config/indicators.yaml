@@ -1587,3 +1587,108 @@
   source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
 
 
+
+# ============================== JAPAN ==============================
+# Current official series only. Not used (not current): BoJ policy rate and monthly CPI on FRED
+# (end 2023 / 2021); IMF annual inflation is used instead.
+- id: jp_10y
+  country: JP
+  topic: bonds
+  name: Japan 10-year government bond (JGB) yield, % (monthly average)
+  source: FRED
+  source_series: IRLTLT01JPM156N
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/IRLTLT01JPM156N
+
+- id: jp_3m
+  country: JP
+  topic: liquidity
+  name: Japan 3-month interbank rate, % (monthly)
+  source: FRED
+  source_series: IR3TIB01JPM156N
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/IR3TIB01JPM156N
+
+- id: usd_jpy
+  country: JP
+  topic: currency
+  name: Japanese yen per US dollar (USD/JPY)
+  source: FRED
+  source_series: DEXJPUS
+  unit: jpy
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DEXJPUS
+
+- id: jp_unemployment
+  country: JP
+  topic: labour
+  name: Japan unemployment rate, ages 15-64, %
+  source: FRED
+  source_series: LRUN64TTJPM156S
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/LRUN64TTJPM156S
+
+- id: jp_gdp_real
+  country: JP
+  topic: growth
+  name: Japan real GDP, chained 2015 yen, billions (quarterly, SA)
+  source: FRED
+  source_series: JPNRGDPEXP
+  unit: jpy_billion
+  frequency: quarterly
+  source_url: https://fred.stlouisfed.org/series/JPNRGDPEXP
+
+- id: jp_gdp_growth
+  country: JP
+  topic: growth
+  name: Japan real GDP growth, % (IMF WEO)
+  source: IMF
+  source_series: "WEO:JPN.NGDP_RPCH.A"
+  unit: percent
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: jp_gdp_growth_imf_proj
+  country: JP
+  topic: growth
+  name: Japan real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:JPN.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: jp_inflation
+  country: JP
+  topic: inflation
+  name: Japan CPI inflation, annual average % (IMF WEO)
+  source: IMF
+  source_series: "WEO:JPN.PCPIPCH.A"
+  unit: percent
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: jp_gov_debt_gdp
+  country: JP
+  topic: fiscal
+  name: Japan general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:JPN.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: jp_gov_balance_gdp
+  country: JP
+  topic: fiscal
+  name: Japan general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:JPN.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
