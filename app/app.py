@@ -48,9 +48,12 @@ section[data-testid="stSidebar"]{{background:#F8FAFC;border-right:1px solid {LIN
 section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.55rem .75rem;border-radius:10px;margin:2px 0;width:100%}}
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){{background:{NAVY}}}
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{color:#FFFFFF !important}}
-section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child,
-section[data-testid="stSidebar"] [data-baseweb="radio"] > div:first-child,
-section[data-testid="stSidebar"] [role="radiogroup"] input{{display:none !important}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child:not([data-testid]),
+section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child:not(:has([data-testid])){{display:none !important}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"]{{width:100%;padding:.55rem .75rem;border-radius:10px}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"]{{background:{NAVY}}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] p{{color:#FFFFFF !important}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"]:not([data-selected="true"]):hover{{background:#EEF2F6}}
 section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:{NAVY}}}
 .sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.35rem;font-weight:700;color:{NAVY};margin:.2rem 0 1rem}}
 .sb-sub{{font-size:.72rem;font-weight:700;color:{MUTED};letter-spacing:.06em;margin:1.2rem 0 .4rem}}
