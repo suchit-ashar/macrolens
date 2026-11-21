@@ -3,7 +3,7 @@ from pathlib import Path
 import yaml
 
 REQUIRED = ["id", "country", "name", "source", "source_series", "unit", "frequency", "source_url"]
-FREQUENCIES = {"daily", "weekly", "monthly", "quarterly", "annual", "event"}
+FREQUENCIES = {"daily", "weekly", "fortnightly", "monthly", "quarterly", "annual", "event"}
 DEFAULT_PATH = Path(__file__).resolve().parent.parent / "config" / "indicators.yaml"
 
 

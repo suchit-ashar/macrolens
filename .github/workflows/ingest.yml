@@ -26,6 +26,15 @@ jobs:
       - name: Run tests
         run: pytest -q
 
+      # Keep downloaded source files (RBI releases, FBIL workbooks, Budget/CGA pages) between runs,
+      # so each day only new releases are downloaded. Parquet in data/clean stays the source of truth.
+      - name: Restore download cache
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+          restore-keys: raw-
+
       - name: Fetch data
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

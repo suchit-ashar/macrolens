@@ -1,7 +1,7 @@
 """Fetch RBI policy rates automatically.
 
 1. The "Policy Rates" box on the RBI home page gives the rate in force today.
-2. For the repo rate, the MPC press release gives the effective date: we scan RBI's recent
+2. For the repo rate (and SDF, MSF and Bank Rate, pegged to it) the MPC press release gives the effective date: we scan RBI's recent
    press-release list for MPC statements, read the announced rate and the release date,
    and use that date when the announced rate equals today's rate. Daily runs always see
    the release, since the list covers the last few weeks.
@@ -25,10 +25,12 @@ from ingest.http import FetchError, get
 HOME = "https://www.rbi.org.in/"
 RELEASES = "https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx"
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw" / "rbi"
+CLEAN_DIR = Path(__file__).resolve().parent.parent / "data" / "clean"
 IST = timezone(timedelta(hours=5, minutes=30))
 MPC_TITLE = re.compile(r"Monetary Policy Statement|Resolution of the Monetary Policy Committee|"
                        r"Governor.{0,3}s Statement", re.I)
 RATE_IN_RELEASE = re.compile(r"policy repo rate[^.]{0,200}?\b(?:to|at)\s+(\d+(?:\.\d+)?)\s*per\s*cent", re.I)
+MPC_LINKED = {"Policy Repo Rate", "Standing Deposit Facility Rate", "Marginal Standing Facility Rate", "Bank Rate"}
 RELEASE_DATE = re.compile(r"Date\s*:\s*([A-Z][a-z]{2,8}\.? \d{1,2}, \d{4})")
 
 
@@ -81,6 +83,17 @@ def effective_date(rate: float, session=None) -> pd.Timestamp | None:
     return None
 
 
+def last_repo_change(repo: float, clean_dir: Path = CLEAN_DIR) -> pd.Timestamp | None:
+    """Effective date of the stored repo rate, if it equals `repo` (pegged rates move with it)."""
+    path = clean_dir / "in_repo_rate.parquet"
+    if not path.exists():
+        return None
+    stored = pd.read_parquet(path).sort_values(["date", "fetched_at"])
+    if stored.empty or abs(stored["value"].iloc[-1] - repo) > 1e-9:
+        return None
+    return pd.Timestamp(stored["date"].iloc[-1])
+
+
 def fetch(source_series: str, since=None, session=None, save_raw: bool = True):
     kind, _, label = source_series.partition(":")
     if kind != "homepage" or not label:
@@ -94,11 +107,16 @@ def fetch(source_series: str, since=None, session=None, save_raw: bool = True):
     today = pd.Timestamp(fetched_at.astimezone(IST).date())
 
     when, basis = None, "observed"
-    if label == "Policy Repo Rate":
+    if label in MPC_LINKED:
+        # SDF, MSF and the Bank Rate are pegged to the repo rate and move with it on MPC days,
+        # so the MPC release that announced today's repo rate dates all four.
+        repo = value if label == "Policy Repo Rate" else parse_rate(html, "Policy Repo Rate")
         try:
-            when = effective_date(value, session=session)
+            when = effective_date(repo, session=session)
         except FetchError:
             when = None  # the home-page value is still good; fall back to today's date
+        if when is None and label != "Policy Repo Rate":
+            when = last_repo_change(repo)
         if when is not None and when <= today:
             basis = "mpc_release"
     df = pd.DataFrame({"date": [when if basis == "mpc_release" else today], "value": [value]})

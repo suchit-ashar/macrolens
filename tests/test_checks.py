@@ -77,3 +77,11 @@ def test_latest_vintage_is_checked():
     old = series(d, v)
     revised = old.tail(1).assign(value=np.nan, fetched_at="2026-11-22T00:00:00")
     assert ("structure", "error") in checks(pd.concat([old, revised]))
+
+
+def test_stale_override_from_registry():
+    entry = {**DAILY, "frequency": "annual", "unit": "percent_of_gdp", "stale_after_days": 1500}
+    d = pd.date_range("2000-01-01", "2023-01-01", freq="YS")
+    assert ("stale", "warn") not in checks(series(d, np.linspace(70, 81, len(d)), entry), entry)
+    entry.pop("stale_after_days")
+    assert ("stale", "warn") in checks(series(d, np.linspace(70, 81, len(d)), entry), entry)

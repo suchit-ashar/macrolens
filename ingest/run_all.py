@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
-from ingest import fbil, fred, mospi, rbi
+from ingest import budget, fbil, fred, imf, mospi, rbi, rbi_releases, trade, worldbank
 from ingest.registry import load_registry
 from transform.checks import run_checks, to_records
 from transform.normalize import latest_vintage, merge_vintages, to_long
@@ -29,7 +29,18 @@ FETCHERS = {
     "FBIL": fbil.fetch,
     "MoSPI": mospi.fetch,
     "RBI": rbi.fetch,
+    "WorldBank": worldbank.fetch,
+    "IMF": imf.fetch,
+    "Commerce": trade.fetch,
+    "Union Budget": budget.fetch,
+    "CGA": budget.fetch,
+    "RBIRelease": rbi_releases.fetch,
 }
+
+
+def fetcher_key(entry: dict) -> str:
+    """Registry `fetcher` overrides `source` (e.g. RBI press-release series show source RBI)."""
+    return entry.get("fetcher") or entry["source"]
 
 
 def update_indicator(entry: dict, clean_dir: Path = CLEAN_DIR, fetchers: dict = FETCHERS) -> pd.DataFrame:
@@ -37,7 +48,7 @@ def update_indicator(entry: dict, clean_dir: Path = CLEAN_DIR, fetchers: dict = 
     existing = pd.read_parquet(path) if path.exists() else None
     since = existing["date"].max().date() if existing is not None and not existing.empty else None
 
-    raw, meta = fetchers[entry["source"]](entry["source_series"], since)
+    raw, meta = fetchers[fetcher_key(entry)](entry["source_series"], since)
     if raw.empty and existing is None:
         raise ValueError("no observations returned")
     new = to_long(raw, entry, release_date=meta.get("last_updated"), fetched_at=meta.get("fetched_at"))
@@ -55,7 +66,7 @@ def main(only: list[str] | None = None) -> int:
     for entry in registry.values():
         if only and entry["id"] not in only:
             continue
-        if entry["source"] not in FETCHERS or entry["source_series"] == "TBD":
+        if fetcher_key(entry) not in FETCHERS or entry["source_series"] == "TBD":
             skipped.append(entry["id"])
             continue
         try:

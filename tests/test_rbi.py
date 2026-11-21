@@ -80,3 +80,13 @@ def test_fetch_falls_back_to_today_without_matching_release():
     pages = {**PAGES, "prid=901": HOLD}  # no release announcing 5.50
     df, meta = rbi.fetch("homepage:Policy Repo Rate", session=FakeSession(pages), save_raw=False)
     assert meta["date_basis"] == "observed" and df["date"].iloc[0] > pd.Timestamp("2026-10-07")
+
+
+def test_pegged_rate_dated_from_stored_repo_change(tmp_path):
+    from transform.normalize import to_long
+    entry = {"id": "in_repo_rate", "country": "IN", "unit": "percent", "frequency": "event",
+             "source": "RBI", "source_url": "https://www.rbi.org.in/"}
+    to_long(pd.DataFrame({"date": ["2025-12-05", "2026-10-07"], "value": [5.25, 5.5]}), entry,
+            fetched_at="2026-11-21T00:00:00").to_parquet(tmp_path / "in_repo_rate.parquet")
+    assert rbi.last_repo_change(5.5, tmp_path) == pd.Timestamp("2026-10-07")
+    assert rbi.last_repo_change(5.75, tmp_path) is None

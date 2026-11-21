@@ -43,10 +43,19 @@ Every fetcher is called as `fetch(source_series, since) -> (DataFrame[date, valu
 
 | Source | Module | source_series | Notes |
 | --- | --- | --- | --- |
-| FRED | `ingest/fred.py` | FRED series id | API key required |
-| FBIL | `ingest/fbil.py` | `refrates:<pair>`, `gsec_par:<tenor>` | Public JSON API at fbil.org.in/wasdm. Public data lags about a week. G-sec par yield comes from one xlsx per valuation day ("Par Yield" sheet, semi-annual), downloaded incrementally from 2025-01-01 and cached in `data/raw/fbil/gsec/` |
-| MoSPI | `ingest/mospi.py` | `getCPIData?<query>` | api.mospi.gov.in/api/cpi. No token: 10 rows per page, so queries are filtered to one series and paged |
-| RBI | `ingest/rbi.py` | `homepage:<label>` | Rate in force from the home page "Policy Rates" box. For the repo rate, the effective date is taken automatically from the matching MPC statement in RBI's recent press-release list; if none matches, the row is dated on the day observed (`meta.date_basis`) |
+| FRED | `ingest/fred.py` | FRED series id | API key required (free) |
+| FBIL | `ingest/fbil.py` | `refrates:<pair>`, `gsec_par:<tenor>`, `<tbill\|cd\|termmibor>:<tenor>`, `ovnmibor`, `mror`, `sorr` | Public JSON API at fbil.org.in/wasdm. Public data lags about a week. G-sec par yields come from one xlsx per valuation day ("Par Yield" sheet, semi-annual), downloaded incrementally from 2025-01-01 and cached in `data/raw/fbil/gsec/`; money-market rates from 2018 |
+| MoSPI | `ingest/mospi.py` | `<cpi\|nas\|plfs>/<endpoint>?<filters>[&_value=..&_top=..]` | api.mospi.gov.in/api, no token: 10-20 rows per page, so queries are filtered to one series and paged. NAS quarters are dated to the start of the fiscal-year quarter |
+| RBI | `ingest/rbi.py` | `homepage:<label>` | Rate in force from the home page "Policy Rates" box. Repo/SDF/MSF/Bank Rate are dated from the matching MPC statement in RBI's recent press-release list (or the stored repo change); otherwise dated on the day observed (`meta.date_basis`) |
+| IMF | `ingest/imf.py` | `WEO:<ISO3>.<INDICATOR>.A[:proj]` | IMF SDMX 3.0 API (api.imf.org), no key; latest World Economic Outlook. History/estimates (before the current year) and projections (current year on) are separate ids. imf.org's datamapper refuses scripts and is not used |
+| World Bank | `ingest/worldbank.py` | `<indicator>:<ISO3>` | api.worldbank.org/v2, no key; annual |
+| RBI releases (`fetcher: RBIRelease`) | `ingest/rbi_releases.py` | `mmo:<field>`, `wss:<field>`, `bop:<field>` | Parsed from rbi.org.in press releases: daily Money Market Operations (WACR, TREPS, net LAF liquidity, SDF/MSF, durable liquidity), Weekly Statistical Supplement (forex reserves, M3, bank credit, deposits), monthly BoP. Archive months read via ASP.NET POST; each release parsed once and cached in `data/raw/rbi/` |
+| Commerce | `ingest/trade.py` | `pib:<field>` | Ministry of Commerce monthly trade release on PIB (www.pib.gov.in only; the bare domain drops form posts). Newest release wins for a month; balances computed as exports − imports |
+| Union Budget, CGA | `ingest/budget.py` | `baag:<metric>:actual\|estimate`, `cga:<metric>` | Budget at a Glance xlsx (current + archived budgets, incl. old .xls read with the stdlib), Actuals and RE/BE kept separate; CGA monthly accounts HTML, cumulative April-to-month |
+
+A registry entry may set `fetcher:` to route to a fetcher other than its `source` (used so RBI
+press-release series still show "RBI" as their source). The GitHub workflow caches `data/raw`
+between runs so only new releases are downloaded.
 
 ## Quality checks (`transform/checks.py`)
 Run on the latest vintage of every stored series at the end of `run_all`; results are
@@ -56,12 +65,13 @@ printed and written to `data/logs/quality.json`, and shown in the dashboard.
 | --- | --- | --- |
 | structure | missing values, future dates, negatives in index/price units, empty series | error |
 | gaps | gap between observations longer than normal for the frequency, ending in the last 2 years | warn |
-| jumps | robust z-score > 8 for one of the last 30 changes | warn |
-| stale | latest observation older than the frequency limit (daily 14d, monthly 80d ...) | warn; error past 2x |
+| jumps | moves in the last year with robust z-score > 8 against the last 3 years (one summary line per series; % changes for price levels, absolute changes for rates and flows) | warn |
+| stale | latest observation older than the frequency limit (daily 14d, monthly 95d, quarterly 250d, annual 1100d) | warn; error past 2x |
 
 Any error makes `run_all` exit 1, so the workflow opens an issue. Registry options:
 `known_gaps: [<date ending the gap>]` for releases a source never published,
-`expect_updates: false` for closed historical series.
+`expect_updates: false` for closed historical series, `projection: true` for forecasts
+(future dates allowed, no staleness check), `stale_after_days: N` to override the limit.
 
 ## Storage (`storage/db.py`)
 Parquet in `data/clean/` is the source of truth. `data/macrolens.duckdb` is a disposable
@@ -70,10 +80,12 @@ vintages), `indicators` (registry). Views: `latest` (one row per date), `summary
 and previous value per indicator).
 
 ## Dashboard (`app/app.py`)
-Tabs: Overview (cards), Charts, India vs US, Data quality, Data & sources (CSV download,
-including vintages). Each chart shows source link, latest date, source update date and
-fetch date. Derived values (CPI YoY %, India-US spread) are labelled "derived". Event
-series are drawn as steps extended to today.
+Tabs, in the order users consult them: Overview, Policy rates, Currency, Bonds, Liquidity,
+Inflation, Growth, External, Fiscal, Jobs, Commodities, Data quality, Data & sources (CSV
+download, including vintages). Each chart shows source links and latest dates. Derived values
+(YoY %, deflator, GDP shares, spreads, real repo rate) are labelled "derived". Event series are
+drawn as steps extended to today. Charts silently skip series that are missing, so a failed
+fetch never breaks the page.
 
 ## Decisions log
 - 2026-11: India sources need no API keys: MoSPI CPI is readable without a token (paged),
@@ -89,5 +101,15 @@ series are drawn as steps extended to today.
   edition; dated from the RBI Governor's Statement of that day.
 - 2026-11: US CPI has no October 2025 value (BLS did not publish it during the federal
   shutdown); recorded as a known gap.
+- 2026-11: Audience is investors, businesses and FDI decision-makers (not a course project):
+  coverage India first, then US, euro area and China; Japan dropped for now.
+- 2026-11: Fiscal cross-country data moved from FRED's IMF copy (frozen at April 2025) to the
+  IMF SDMX API (latest WEO). Union Budget figures come from the Budget at a Glance workbook
+  and CGA monthly accounts (no official fiscal API exists; data.gov.in fiscal sets are stale).
+- 2026-11: Not used because not current: FRED China monthly CPI (ends 2025), FRED euro area
+  unemployment (ends 2023), World Bank India central government debt (ends 2018).
+- 2026-11: Known holes, by source: Union Budget Actuals for FY 2022-23 (Budget 2024-25 files
+  404 on indiabudget.gov.in); monthly BoP Oct 2025-Mar 2026 (monthly releases began Apr 2026);
+  PLFS March 2026 (absent from the MoSPI API). Recorded as known gaps, never filled by estimation.
 - 2026-11: Python + DuckDB/Parquet + Streamlit for MVP; Next.js later.
 - 2026-11: GitHub Actions for scheduled ingestion.

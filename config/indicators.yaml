@@ -1,8 +1,81 @@
-# MVP indicator registry. Every series the app shows must be listed here.
-# source_series: the code the source uses (FRED id, RBI table, etc.). "TBD" = to be mapped in Phase 1.
+﻿# Indicator registry. Every series the app shows must be listed here, and every one is fetched
+# automatically by ingest/run_all.py (no manual data entry).
+#
+# Required: id, country, name, source, source_series, unit, frequency, source_url
+# Optional: topic (dashboard grouping: monetary, inflation, growth, labour, fiscal, markets)
+#           known_gaps: [dates ending a gap the source never filled]     (quality checks)
+#           expect_updates: false   closed historical series            (quality checks)
+#           stale_after_days: N     override the staleness limit        (quality checks)
+#           note: shown under the chart
+
+# ============================== MONETARY ==============================
+# RBI rates: history 2008-2025 imported once from RBI Handbook Table 40 (ingest/rbi_history.py);
+# afterwards read daily from the RBI home page. A row is stored only when the rate changes.
+# Repo/SDF/MSF/Bank Rate are dated from the MPC press release automatically.
+- id: in_repo_rate
+  country: IN
+  topic: monetary
+  name: RBI policy repo rate
+  source: RBI
+  source_series: "homepage:Policy Repo Rate"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
+
+- id: in_sdf_rate
+  country: IN
+  topic: monetary
+  name: Standing Deposit Facility rate (floor of the corridor)
+  source: RBI
+  source_series: "homepage:Standing Deposit Facility Rate"
+  unit: percent
+  frequency: event
+  note: Introduced 8 April 2022; replaced the fixed reverse repo as the corridor floor.
+  source_url: https://www.rbi.org.in/
+
+- id: in_msf_rate
+  country: IN
+  topic: monetary
+  name: Marginal Standing Facility rate (ceiling of the corridor)
+  source: RBI
+  source_series: "homepage:Marginal Standing Facility Rate"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
+
+- id: in_bank_rate
+  country: IN
+  topic: monetary
+  name: RBI Bank Rate
+  source: RBI
+  source_series: "homepage:Bank Rate"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
+
+- id: in_crr
+  country: IN
+  topic: monetary
+  name: Cash Reserve Ratio (CRR)
+  source: RBI
+  source_series: "homepage:CRR"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
+
+- id: in_slr
+  country: IN
+  topic: monetary
+  name: Statutory Liquidity Ratio (SLR)
+  source: RBI
+  source_series: "homepage:SLR"
+  unit: percent
+  frequency: event
+  source_url: https://www.rbi.org.in/
 
 - id: us_policy_rate
   country: US
+  topic: monetary
   name: Fed funds target range, upper bound
   source: FRED
   source_series: DFEDTARU
@@ -10,8 +83,77 @@
   frequency: daily
   source_url: https://fred.stlouisfed.org/series/DFEDTARU
 
+- id: us_fed_funds_effective
+  country: US
+  topic: monetary
+  name: Federal funds effective rate
+  source: FRED
+  source_series: DFF
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DFF
+
+# ============================== INFLATION ==============================
+# India CPI, 2024 base. state 1 = All India, sector 3 = Combined, division 0 = CPI (General),
+# division 1 = Food and beverages. "inflation" is MoSPI's own published YoY %.
+# Live series (2025 onwards) and MoSPI's official back series are separate ids, never spliced.
+- id: in_cpi_inflation
+  country: IN
+  topic: inflation
+  name: CPI headline inflation, YoY % (2024 base, official)
+  source: MoSPI
+  source_series: "cpi/getCPIData?base_year=2024&series=Current&state_code=1&sector_code=3&division_code=0&_value=inflation"
+  unit: percent
+  frequency: monthly
+  note: RBI's target is 4% with a tolerance band of 2-6%.
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+- id: in_cpi_inflation_back
+  country: IN
+  topic: inflation
+  name: CPI headline inflation, YoY % (2024 base, official back series)
+  source: MoSPI
+  source_series: "cpi/getCPIData?base_year=2024&series=Back&state_code=1&sector_code=3&division_code=0&_value=inflation"
+  unit: percent
+  frequency: monthly
+  expect_updates: false
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+- id: in_food_inflation
+  country: IN
+  topic: inflation
+  name: CPI food and beverages inflation, YoY % (2024 base, official)
+  source: MoSPI
+  source_series: "cpi/getCPIData?base_year=2024&series=Current&state_code=1&sector_code=3&division_code=1&_value=inflation&_top=group&_from_year=2025"
+  unit: percent
+  frequency: monthly
+  note: Food and beverages carry about 37% of the 2024-base CPI basket.
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+- id: in_cpi_2024base
+  country: IN
+  topic: inflation
+  name: All-India CPI combined, general index (base 2024=100)
+  source: MoSPI
+  source_series: "cpi/getCPIData?base_year=2024&series=Current&state_code=1&sector_code=3&division_code=0"
+  unit: index
+  frequency: monthly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
+- id: in_cpi_2024base_back
+  country: IN
+  topic: inflation
+  name: All-India CPI combined, general index (base 2024=100), official back series
+  source: MoSPI
+  source_series: "cpi/getCPIData?base_year=2024&series=Back&state_code=1&sector_code=3&division_code=0"
+  unit: index
+  frequency: monthly
+  expect_updates: false   # closed historical series: skip the staleness check
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
+
 - id: us_cpi
   country: US
+  topic: inflation
   name: CPI-U, all items, seasonally adjusted
   source: FRED
   source_series: CPIAUCSL
@@ -20,17 +162,619 @@
   known_gaps: ["2025-11-01"]   # BLS published no October 2025 CPI (federal government shutdown)
   source_url: https://fred.stlouisfed.org/series/CPIAUCSL
 
+- id: us_core_cpi
+  country: US
+  topic: inflation
+  name: CPI-U less food and energy (core), seasonally adjusted
+  source: FRED
+  source_series: CPILFESL
+  unit: index
+  frequency: monthly
+  known_gaps: ["2025-11-01"]
+  source_url: https://fred.stlouisfed.org/series/CPILFESL
+
+- id: us_core_pce
+  country: US
+  topic: inflation
+  name: US core PCE price index (the Fed's 2% target measure)
+  source: FRED
+  source_series: PCEPILFE
+  unit: index
+  frequency: monthly
+  known_gaps: ["2025-11-01"]
+  source_url: https://fred.stlouisfed.org/series/PCEPILFE
+
+# ============================== GROWTH (GDP) ==============================
+# MoSPI national accounts, new 2022-23 base (released 27 Feb 2026), quarterly from FY 2022-23.
+# Dated at the start of the fiscal-year quarter (Q1 = April-June). Levels in Rs crore.
+- id: in_gdp_growth
+  country: IN
+  topic: growth
+  name: Real GDP growth, YoY % (quarterly, 2022-23 base)
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=22&_value=constant_price"
+  unit: percent
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_gdp_growth_nominal
+  country: IN
+  topic: growth
+  name: Nominal GDP growth, YoY % (quarterly, 2022-23 base)
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=22&_value=current_price"
+  unit: percent
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_gdp_real
+  country: IN
+  topic: growth
+  name: Real GDP, Rs crore (quarterly, constant 2022-23 prices)
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=5&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_gdp_nominal
+  country: IN
+  topic: growth
+  name: Nominal GDP, Rs crore (quarterly, current prices)
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=5&_value=current_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_pfce_real
+  country: IN
+  topic: growth
+  name: Private final consumption expenditure (C), Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=10&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_gfce_real
+  country: IN
+  topic: growth
+  name: Government final consumption expenditure (G), Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=11&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_gfcf_real
+  country: IN
+  topic: growth
+  name: Gross fixed capital formation (I), Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=9&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_change_stock_real
+  country: IN
+  topic: growth
+  name: Change in stocks, Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=12&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_valuables_real
+  country: IN
+  topic: growth
+  name: Valuables, Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=13&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_exports_real
+  country: IN
+  topic: growth
+  name: Exports of goods and services (X), Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=14&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: in_imports_real
+  country: IN
+  topic: growth
+  name: Imports of goods and services (M), Rs crore, constant prices
+  source: MoSPI
+  source_series: "nas/getNasData?base_year=2022-23&series=Current&frequency_code=2&indicator_code=15&_value=constant_price"
+  unit: inr_crore
+  frequency: quarterly
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=nas
+
+- id: us_gdp_growth
+  country: US
+  topic: growth
+  name: US real GDP growth, % q/q annualised (SAAR)
+  source: FRED
+  source_series: A191RL1Q225SBEA
+  unit: percent
+  frequency: quarterly
+  note: Annualised quarter-on-quarter, not comparable one-for-one with India's YoY growth.
+  source_url: https://fred.stlouisfed.org/series/A191RL1Q225SBEA
+
+# World Bank annual series (1 Jan of the year). Long history for cross-country comparison.
+- id: in_gdp_pc
+  country: IN
+  topic: growth
+  name: India real GDP per capita (constant 2015 US$)
+  source: WorldBank
+  source_series: "NY.GDP.PCAP.KD:IND"
+  unit: usd
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/NY.GDP.PCAP.KD?locations=IN
+
+- id: in_gni_pc
+  country: IN
+  topic: growth
+  name: India GNI per capita, Atlas method (current US$)
+  source: WorldBank
+  source_series: "NY.GNP.PCAP.CD:IND"
+  unit: usd
+  frequency: annual
+  note: World Bank income groups are set on this measure (India is lower-middle income).
+  source_url: https://data.worldbank.org/indicator/NY.GNP.PCAP.CD?locations=IN
+
+- id: in_gfcf_gdp
+  country: IN
+  topic: growth
+  name: India gross fixed capital formation, % of GDP
+  source: WorldBank
+  source_series: "NE.GDI.FTOT.ZS:IND"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/NE.GDI.FTOT.ZS?locations=IN
+
+# ============================== LABOUR ==============================
+# PLFS monthly bulletin (MoSPI), current weekly status (CWS), age 15+, persons, rural + urban.
+- id: in_unemployment
+  country: IN
+  topic: labour
+  name: Unemployment rate, % (PLFS monthly, CWS, age 15+)
+  source: MoSPI
+  source_series: "plfs/getData?indicator_code=3&frequency_code=3&age_code=1&gender_code=3&sector_code=3"
+  unit: percent
+  frequency: monthly
+  known_gaps: ["2026-04-01"]   # March 2026 is not in the MoSPI PLFS API
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=plfs
+
+- id: in_lfpr
+  country: IN
+  topic: labour
+  name: Labour force participation rate, % (PLFS monthly, CWS, age 15+)
+  source: MoSPI
+  source_series: "plfs/getData?indicator_code=1&frequency_code=3&age_code=1&gender_code=3&sector_code=3"
+  unit: percent
+  frequency: monthly
+  known_gaps: ["2026-04-01"]
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=plfs
+
+- id: in_wpr
+  country: IN
+  topic: labour
+  name: Worker population ratio, % (PLFS monthly, CWS, age 15+)
+  source: MoSPI
+  source_series: "plfs/getData?indicator_code=2&frequency_code=3&age_code=1&gender_code=3&sector_code=3"
+  unit: percent
+  frequency: monthly
+  known_gaps: ["2026-04-01"]
+  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=plfs
+
+# ILO modelled estimates via the World Bank: comparable across countries, but modelled, so they
+# can differ from PLFS (the slides discuss why).
+- id: in_unemployment_ilo
+  country: IN
+  topic: labour
+  name: India unemployment, % of labour force (ILO modelled)
+  source: WorldBank
+  source_series: "SL.UEM.TOTL.ZS:IND"
+  unit: percent
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS?locations=IN
+
+- id: in_lfpr_female_ilo
+  country: IN
+  topic: labour
+  name: India female labour force participation, % ages 15+ (ILO modelled)
+  source: WorldBank
+  source_series: "SL.TLF.CACT.FE.ZS:IND"
+  unit: percent
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/SL.TLF.CACT.FE.ZS?locations=IN
+
+- id: in_lfpr_male_ilo
+  country: IN
+  topic: labour
+  name: India male labour force participation, % ages 15+ (ILO modelled)
+  source: WorldBank
+  source_series: "SL.TLF.CACT.MA.ZS:IND"
+  unit: percent
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/SL.TLF.CACT.MA.ZS?locations=IN
+
+- id: us_unemployment
+  country: US
+  topic: labour
+  name: US unemployment rate, % (seasonally adjusted)
+  source: FRED
+  source_series: UNRATE
+  unit: percent
+  frequency: monthly
+  known_gaps: ["2025-11-01"]   # no October 2025 household survey (federal government shutdown)
+  source_url: https://fred.stlouisfed.org/series/UNRATE
+
+- id: us_lfpr
+  country: US
+  topic: labour
+  name: US labour force participation rate, %
+  source: FRED
+  source_series: CIVPART
+  unit: percent
+  frequency: monthly
+  known_gaps: ["2025-11-01"]
+  source_url: https://fred.stlouisfed.org/series/CIVPART
+
+# ============================== FISCAL ==============================
+# IMF World Economic Outlook via the IMF SDMX API (latest WEO, no key). General government =
+# centre + states. History/estimates (before the current year) and IMF projections (current
+# year onwards) are separate ids and never mixed. India figures are fiscal years (2025 = FY26).
+- id: in_gov_debt_gdp
+  country: IN
+  topic: fiscal
+  name: India general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:IND.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  note: Centre + States, fiscal years. FRBM target for general government is 60% of GDP. Latest years are IMF estimates.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: in_gov_debt_gdp_proj
+  country: IN
+  topic: fiscal
+  name: India general government gross debt, % of GDP (IMF projection)
+  source: IMF
+  source_series: "WEO:IND.GGXWDG_NGDP.A:proj"
+  unit: percent_of_gdp
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: in_gov_balance_gdp
+  country: IN
+  topic: fiscal
+  name: India general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:IND.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  note: Net lending (+) / borrowing (-); negative = deficit. Centre + States, so larger than the Union fiscal deficit.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: in_gov_balance_gdp_proj
+  country: IN
+  topic: fiscal
+  name: India general government fiscal balance, % of GDP (IMF projection)
+  source: IMF
+  source_series: "WEO:IND.GGXCNL_NGDP.A:proj"
+  unit: percent_of_gdp
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: in_gov_primary_balance_gdp
+  country: IN
+  topic: fiscal
+  name: India general government primary balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:IND.GGXONLB_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  note: Fiscal balance excluding interest payments.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: us_gov_debt_gdp
+  country: US
+  topic: fiscal
+  name: US general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:USA.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: us_gov_balance_gdp
+  country: US
+  topic: fiscal
+  name: US general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:USA.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: us_federal_debt_gdp
+  country: US
+  topic: fiscal
+  name: US federal debt, % of GDP (quarterly)
+  source: FRED
+  source_series: GFDEGDQ188S
+  unit: percent_of_gdp
+  frequency: quarterly
+  source_url: https://fred.stlouisfed.org/series/GFDEGDQ188S
+
+# ============================== LIQUIDITY ==============================
+# India money market: FBIL benchmarks (public data lags about a week). Overnight rates trading
+# above the repo rate mean tight liquidity; below it (towards SDF) means surplus liquidity.
+- id: in_mibor_overnight
+  country: IN
+  topic: liquidity
+  name: Overnight MIBOR (FBIL), %
+  source: FBIL
+  source_series: "ovnmibor"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: in_market_repo_rate
+  country: IN
+  topic: liquidity
+  name: Market repo overnight rate, MROR (FBIL), %
+  source: FBIL
+  source_series: "mror"
+  unit: percent
+  frequency: daily
+  note: Overnight rate on repo trades in government securities; tenor runs over weekends and holidays.
+  source_url: https://www.fbil.org.in/
+
+- id: in_tbill_91d
+  country: IN
+  topic: liquidity
+  name: 91-day (3-month) T-bill rate (FBIL), %
+  source: FBIL
+  source_series: "tbill:3 Months"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: in_tbill_364d
+  country: IN
+  topic: liquidity
+  name: 364-day (12-month) T-bill rate (FBIL), %
+  source: FBIL
+  source_series: "tbill:12 Months"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: in_cd_3m
+  country: IN
+  topic: liquidity
+  name: 3-month certificate of deposit rate (FBIL), %
+  source: FBIL
+  source_series: "cd:3 Months"
+  unit: percent
+  frequency: daily
+  note: Bank funding cost; widening over T-bills signals tighter bank liquidity.
+  source_url: https://www.fbil.org.in/
+
+- id: us_fed_balance_sheet
+  country: US
+  topic: liquidity
+  name: Federal Reserve total assets, US$ million (weekly)
+  source: FRED
+  source_series: WALCL
+  unit: usd_million
+  frequency: weekly
+  source_url: https://fred.stlouisfed.org/series/WALCL
+
+- id: us_bank_reserves
+  country: US
+  topic: liquidity
+  name: Reserve balances with Federal Reserve banks, US$ million (weekly)
+  source: FRED
+  source_series: WRESBAL
+  unit: usd_million
+  frequency: weekly
+  source_url: https://fred.stlouisfed.org/series/WRESBAL
+
+- id: us_reverse_repo
+  country: US
+  topic: liquidity
+  name: Fed overnight reverse repo (ON RRP) usage, US$ billion
+  source: FRED
+  source_series: RRPONTSYD
+  unit: usd_billion
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/RRPONTSYD
+
+- id: us_m2
+  country: US
+  topic: liquidity
+  name: US M2 money stock, US$ billion (seasonally adjusted)
+  source: FRED
+  source_series: M2SL
+  unit: usd_billion
+  frequency: monthly
+  known_gaps: ["2025-11-01"]
+  source_url: https://fred.stlouisfed.org/series/M2SL
+
+# ============================== BONDS ==============================
+# India G-sec curve: FBIL par yields (semi-annual YTM) from the daily valuation file. These are
+# curve points, not specific benchmark bonds.
+- id: in_gsec_1y
+  country: IN
+  topic: bonds
+  name: India 1-year G-sec par yield (FBIL), %
+  source: FBIL
+  source_series: "gsec_par:1"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: in_gsec_2y
+  country: IN
+  topic: bonds
+  name: India 2-year G-sec par yield (FBIL), %
+  source: FBIL
+  source_series: "gsec_par:2"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: in_gsec_5y
+  country: IN
+  topic: bonds
+  name: India 5-year G-sec par yield (FBIL), %
+  source: FBIL
+  source_series: "gsec_par:5"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: in_10y
+  country: IN
+  topic: bonds
+  name: India 10-year G-sec par yield (FBIL), %
+  source: FBIL
+  source_series: "gsec_par:10"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: in_gsec_30y
+  country: IN
+  topic: bonds
+  name: India 30-year G-sec par yield (FBIL), %
+  source: FBIL
+  source_series: "gsec_par:30"
+  unit: percent
+  frequency: daily
+  source_url: https://www.fbil.org.in/#/benchmark/gsec
+
+- id: us_3m
+  country: US
+  topic: bonds
+  name: US 3-month Treasury bill, secondary market rate, %
+  source: FRED
+  source_series: DTB3
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DTB3
+
+- id: us_2y
+  country: US
+  topic: bonds
+  name: US 2-year Treasury yield, %
+  source: FRED
+  source_series: DGS2
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DGS2
+
 - id: us_10y
   country: US
-  name: 10-year Treasury constant maturity yield
+  topic: bonds
+  name: US 10-year Treasury yield, %
   source: FRED
   source_series: DGS10
   unit: percent
   frequency: daily
   source_url: https://fred.stlouisfed.org/series/DGS10
 
+- id: us_30y
+  country: US
+  topic: bonds
+  name: US 30-year Treasury yield, %
+  source: FRED
+  source_series: DGS30
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DGS30
+
+- id: us_10y_real
+  country: US
+  topic: bonds
+  name: US 10-year real yield (TIPS), %
+  source: FRED
+  source_series: DFII10
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DFII10
+
+# ============================== CURRENCY ==============================
+# FBIL reference rates (public data lags about a week).
+- id: inr_usd
+  country: IN
+  topic: currency
+  name: INR per USD, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 1 USD"
+  unit: inr_per_usd
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: inr_eur
+  country: IN
+  topic: currency
+  name: INR per EUR, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 1 EUR"
+  unit: inr
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: inr_gbp
+  country: IN
+  topic: currency
+  name: INR per GBP, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 1 GBP"
+  unit: inr
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: inr_jpy100
+  country: IN
+  topic: currency
+  name: INR per 100 JPY, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 100 JPY"
+  unit: inr
+  frequency: daily
+  source_url: https://www.fbil.org.in/
+
+- id: inr_aed
+  country: IN
+  topic: currency
+  name: INR per AED, FBIL reference rate
+  source: FBIL
+  source_series: "refrates:INR / 1 AED"
+  unit: inr
+  frequency: daily
+  note: UAE is a major source of remittances and trade for India.
+  source_url: https://www.fbil.org.in/
+
 - id: us_dollar_broad
   country: US
+  topic: currency
   name: Nominal broad US dollar index (Fed)
   source: FRED
   source_series: DTWEXBGS
@@ -40,6 +784,7 @@
 
 - id: brent
   country: GLOBAL
+  topic: commodities
   name: Brent crude spot price
   source: FRED
   source_series: DCOILBRENTEU
@@ -47,55 +792,798 @@
   frequency: daily
   source_url: https://fred.stlouisfed.org/series/DCOILBRENTEU
 
-# Observed daily from the RBI home page; a row is stored only when the rate changes.
-# Dates are observation dates, not MPC effective dates. History before the first run: TODO.
-- id: in_repo_rate
+# ============================== EXTERNAL ==============================
+# World Bank annual series (1 January of the year). Higher-frequency RBI data (weekly forex
+# reserves, quarterly BoP) to be added once the sources are confirmed.
+- id: in_fdi_inflows
   country: IN
-  name: RBI policy repo rate
+  topic: external
+  name: India FDI, net inflows, current US$ (World Bank)
+  source: WorldBank
+  source_series: "BX.KLT.DINV.CD.WD:IND"
+  unit: usd
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/BX.KLT.DINV.CD.WD?locations=IN
+
+- id: in_current_account_gdp
+  country: IN
+  topic: external
+  name: India current account balance, % of GDP (World Bank)
+  source: WorldBank
+  source_series: "BN.CAB.XOKA.GD.ZS:IND"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/BN.CAB.XOKA.GD.ZS?locations=IN
+
+- id: in_reserves_total
+  country: IN
+  topic: external
+  name: India total reserves including gold, current US$ (World Bank)
+  source: WorldBank
+  source_series: "FI.RES.TOTL.CD:IND"
+  unit: usd
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/FI.RES.TOTL.CD?locations=IN
+
+# ============================== CHINA AND EURO AREA ==============================
+- id: ea_ecb_deposit_rate
+  country: EA
+  topic: monetary
+  name: ECB deposit facility rate, %
+  source: FRED
+  source_series: ECBDFR
+  unit: percent
+  frequency: daily
+  note: The ECB's main policy signal since 2024.
+  source_url: https://fred.stlouisfed.org/series/ECBDFR
+
+- id: ea_ecb_mro_rate
+  country: EA
+  topic: monetary
+  name: ECB main refinancing operations rate, %
+  source: FRED
+  source_series: ECBMRRFR
+  unit: percent
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/ECBMRRFR
+
+- id: ea_hicp
+  country: EA
+  topic: inflation
+  name: Euro area HICP, all items (index, 2015=100)
+  source: FRED
+  source_series: CP0000EZ19M086NEST
+  unit: index
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/CP0000EZ19M086NEST
+
+- id: cn_inflation
+  country: CN
+  topic: inflation
+  name: China CPI inflation, annual average % (IMF WEO)
+  source: IMF
+  source_series: "WEO:CHN.PCPIPCH.A"
+  unit: percent
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: ea_gdp_real
+  country: EA
+  topic: growth
+  name: Euro area real GDP, chained 2010 euros (quarterly, SA)
+  source: FRED
+  source_series: CLVMNACSCAB1GQEA19
+  unit: eur_million
+  frequency: quarterly
+  source_url: https://fred.stlouisfed.org/series/CLVMNACSCAB1GQEA19
+
+- id: in_gdp_growth_imf_proj
+  country: IN
+  topic: growth
+  name: India real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:IND.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, fiscal years (2026 = FY27). Not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: us_gdp_growth_imf_proj
+  country: US
+  topic: growth
+  name: US real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:USA.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: cn_gdp_growth
+  country: CN
+  topic: growth
+  name: China real GDP growth, % (IMF WEO)
+  source: IMF
+  source_series: "WEO:CHN.NGDP_RPCH.A"
+  unit: percent
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: cn_gdp_growth_imf_proj
+  country: CN
+  topic: growth
+  name: China real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:CHN.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: cn_gdp_pc
+  country: CN
+  topic: growth
+  name: China real GDP per capita (constant 2015 US$)
+  source: WorldBank
+  source_series: "NY.GDP.PCAP.KD:CHN"
+  unit: usd
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/NY.GDP.PCAP.KD?locations=CN
+
+- id: cn_gni_pc
+  country: CN
+  topic: growth
+  name: China GNI per capita, Atlas method (current US$)
+  source: WorldBank
+  source_series: "NY.GNP.PCAP.CD:CHN"
+  unit: usd
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/NY.GNP.PCAP.CD?locations=CN
+
+- id: cn_gfcf_gdp
+  country: CN
+  topic: growth
+  name: China gross fixed capital formation, % of GDP
+  source: WorldBank
+  source_series: "NE.GDI.FTOT.ZS:CHN"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/NE.GDI.FTOT.ZS?locations=CN
+
+- id: cn_unemployment_ilo
+  country: CN
+  topic: labour
+  name: China unemployment, % of labour force (ILO modelled)
+  source: WorldBank
+  source_series: "SL.UEM.TOTL.ZS:CHN"
+  unit: percent
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS?locations=CN
+
+- id: cn_lfpr_female_ilo
+  country: CN
+  topic: labour
+  name: China female labour force participation, % ages 15+ (ILO modelled)
+  source: WorldBank
+  source_series: "SL.TLF.CACT.FE.ZS:CHN"
+  unit: percent
+  frequency: annual
+  source_url: https://data.worldbank.org/indicator/SL.TLF.CACT.FE.ZS?locations=CN
+
+- id: cn_gov_debt_gdp
+  country: CN
+  topic: fiscal
+  name: China general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:CHN.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: cn_gov_balance_gdp
+  country: CN
+  topic: fiscal
+  name: China general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:CHN.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: de_10y
+  country: EA
+  topic: bonds
+  name: Germany 10-year Bund yield, % (monthly average)
+  source: FRED
+  source_series: IRLTLT01DEM156N
+  unit: percent
+  frequency: monthly
+  note: Benchmark for euro area government bonds.
+  source_url: https://fred.stlouisfed.org/series/IRLTLT01DEM156N
+
+- id: usd_eur
+  country: EA
+  topic: currency
+  name: US dollars per euro (EUR/USD)
+  source: FRED
+  source_series: DEXUSEU
+  unit: usd_per_eur
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DEXUSEU
+
+- id: cny_usd
+  country: CN
+  topic: currency
+  name: Chinese yuan per US dollar (USD/CNY)
+  source: FRED
+  source_series: DEXCHUS
+  unit: cny
+  frequency: daily
+  source_url: https://fred.stlouisfed.org/series/DEXCHUS
+
+# ============================== TRADE (Ministry of Commerce) ==============================
+# Monthly release on PIB (Table 1, US$ billion). Each release gives the latest month and restates
+# the same month a year earlier; the newest release wins. Balances = exports - imports (the printed
+# balance can lose its sign).
+- id: in_merch_exports
+  country: IN
+  topic: external
+  name: India merchandise exports, US$ bn
+  source: Commerce
+  source_series: "pib:merch_exports"
+  unit: usd_billion
+  frequency: monthly
+  note: Latest month is a quick estimate, revised a year later.
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_merch_imports
+  country: IN
+  topic: external
+  name: India merchandise imports, US$ bn
+  source: Commerce
+  source_series: "pib:merch_imports"
+  unit: usd_billion
+  frequency: monthly
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_merch_trade_balance
+  country: IN
+  topic: external
+  name: India merchandise trade balance, US$ bn
+  source: Commerce
+  source_series: "pib:merch_balance"
+  unit: usd_billion
+  frequency: monthly
+  note: Computed as exports minus imports (negative = deficit).
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_services_exports
+  country: IN
+  topic: external
+  name: India services exports, US$ bn
+  source: Commerce
+  source_series: "pib:services_exports"
+  unit: usd_billion
+  frequency: monthly
+  note: Latest month is an estimate (RBI services data come later).
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_services_imports
+  country: IN
+  topic: external
+  name: India services imports, US$ bn
+  source: Commerce
+  source_series: "pib:services_imports"
+  unit: usd_billion
+  frequency: monthly
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_total_exports
+  country: IN
+  topic: external
+  name: India total exports (goods + services), US$ bn
+  source: Commerce
+  source_series: "pib:total_exports"
+  unit: usd_billion
+  frequency: monthly
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_total_imports
+  country: IN
+  topic: external
+  name: India total imports (goods + services), US$ bn
+  source: Commerce
+  source_series: "pib:total_imports"
+  unit: usd_billion
+  frequency: monthly
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+- id: in_total_trade_balance
+  country: IN
+  topic: external
+  name: India total trade balance (goods + services), US$ bn
+  source: Commerce
+  source_series: "pib:total_balance"
+  unit: usd_billion
+  frequency: monthly
+  note: Computed as exports minus imports (negative = deficit).
+  source_url: https://www.pib.gov.in/allRel.aspx?reg=3&lang=1
+
+# ============================== FISCAL: UNION GOVERNMENT ==============================
+# Union Budget 'Budget at a Glance' (Actuals and estimates are separate ids, never mixed; fiscal
+# years dated 1 April of the start year) and CGA monthly accounts (cumulative April to month).
+- id: in_fiscal_deficit_gdp
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, % of GDP (Actuals)
+  source: Union Budget
+  source_series: "baag:fiscal_deficit_gdp:actual"
+  unit: percent_of_gdp
+  frequency: annual
+  note: "Budget Actuals only. FY 2022-23 not available from this source."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_fiscal_deficit_gdp_est
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, % of GDP (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:fiscal_deficit_gdp:estimate"
+  unit: percent_of_gdp
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate (FY 2023-24 is BE). Not actual outturn."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_revenue_deficit_gdp
+  country: IN
+  topic: fiscal
+  name: Central government revenue deficit, % of GDP (Actuals)
+  source: Union Budget
+  source_series: "baag:revenue_deficit_gdp:actual"
+  unit: percent_of_gdp
+  frequency: annual
+  note: "Budget Actuals only. FY 2022-23 not available."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_revenue_deficit_gdp_est
+  country: IN
+  topic: fiscal
+  name: Central government revenue deficit, % of GDP (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:revenue_deficit_gdp:estimate"
+  unit: percent_of_gdp
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_primary_deficit_gdp
+  country: IN
+  topic: fiscal
+  name: Central government primary deficit, % of GDP (Actuals)
+  source: Union Budget
+  source_series: "baag:primary_deficit_gdp:actual"
+  unit: percent_of_gdp
+  frequency: annual
+  note: "Fiscal deficit minus interest payments. Budget Actuals only."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_primary_deficit_gdp_est
+  country: IN
+  topic: fiscal
+  name: Central government primary deficit, % of GDP (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:primary_deficit_gdp:estimate"
+  unit: percent_of_gdp
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_fiscal_deficit_cr
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, Rs crore (Actuals)
+  source: Union Budget
+  source_series: "baag:fiscal_deficit:actual"
+  unit: inr_crore
+  frequency: annual
+  note: "Budget Actuals only."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_fiscal_deficit_cr_est
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, Rs crore (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:fiscal_deficit:estimate"
+  unit: inr_crore
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_capex_cr
+  country: IN
+  topic: fiscal
+  name: Central government capital expenditure, Rs crore (Actuals)
+  source: Union Budget
+  source_series: "baag:capital_expenditure:actual"
+  unit: inr_crore
+  frequency: annual
+  note: "Capital account spending (excludes grants for capital assets). Budget Actuals only."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_capex_cr_est
+  country: IN
+  topic: fiscal
+  name: Central government capital expenditure, Rs crore (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:capital_expenditure:estimate"
+  unit: inr_crore
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_interest_cr
+  country: IN
+  topic: fiscal
+  name: Central government interest payments, Rs crore (Actuals)
+  source: Union Budget
+  source_series: "baag:interest_payments:actual"
+  unit: inr_crore
+  frequency: annual
+  note: "Budget Actuals only."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_interest_cr_est
+  country: IN
+  topic: fiscal
+  name: Central government interest payments, Rs crore (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:interest_payments:estimate"
+  unit: inr_crore
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_total_expenditure_cr
+  country: IN
+  topic: fiscal
+  name: Central government total expenditure, Rs crore (Actuals)
+  source: Union Budget
+  source_series: "baag:total_expenditure:actual"
+  unit: inr_crore
+  frequency: annual
+  note: "Budget Actuals only."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_total_expenditure_cr_est
+  country: IN
+  topic: fiscal
+  name: Central government total expenditure, Rs crore (latest budget estimate)
+  source: Union Budget
+  source_series: "baag:total_expenditure:estimate"
+  unit: inr_crore
+  frequency: annual
+  projection: true
+  note: "Revised Estimate if published, else Budget Estimate."
+  source_url: https://www.indiabudget.gov.in/doc/Budget_at_Glance/budget_at_a_glance.xlsx
+
+- id: in_cga_fiscal_deficit
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:fiscal_deficit"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date; March = provisional full year. Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_fiscal_deficit_pct_target
+  country: IN
+  topic: fiscal
+  name: Central government fiscal deficit, cumulative April to month, % of budget target
+  source: CGA
+  source_series: "cga:fiscal_deficit_pct_target"
+  unit: percent
+  frequency: monthly
+  note: "As printed by CGA: % of Budget Estimates April-December, % of Revised Estimates January-March."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_revenue_deficit
+  country: IN
+  topic: fiscal
+  name: Central government revenue deficit, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:revenue_deficit"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date; can be negative early in the year. Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_primary_deficit
+  country: IN
+  topic: fiscal
+  name: Central government primary deficit, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:primary_deficit"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date; can be negative (surplus). Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_total_receipts
+  country: IN
+  topic: fiscal
+  name: Central government total receipts (excl. borrowings), cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:total_receipts"
+  unit: inr_crore
+  frequency: monthly
+  note: "Revenue receipts + non-debt capital receipts, fiscal year to date. Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_total_expenditure
+  country: IN
+  topic: fiscal
+  name: Central government total expenditure, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:total_expenditure"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date. Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_capex
+  country: IN
+  topic: fiscal
+  name: Central government capital expenditure, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:capital_expenditure"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date, includes loans disbursed. Unaudited."
+  source_url: https://cga.nic.in/
+
+- id: in_cga_interest
+  country: IN
+  topic: fiscal
+  name: Central government interest payments, cumulative April to month, Rs crore
+  source: CGA
+  source_series: "cga:interest_payments"
+  unit: inr_crore
+  frequency: monthly
+  note: "Cumulative fiscal year to date. Unaudited."
+  source_url: https://cga.nic.in/
+
+
+
+# ============================== RBI PRESS RELEASES ==============================
+# Parsed from rbi.org.in releases by ingest/rbi_releases.py (fetcher: RBIRelease): daily Money Market
+# Operations, Weekly Statistical Supplement, monthly Balance of Payments.
+- id: in_wacr
+  country: IN
+  topic: liquidity
+  name: "Weighted average call rate (WACR), overnight call money"
   source: RBI
-  source_series: "homepage:Policy Repo Rate"
-  unit: percent
-  frequency: event
-  source_url: https://www.rbi.org.in/
-
-# 2024-base CPI, live series (Jan 2025 onwards). state 1 = All India, sector 3 = Combined,
-# division 0 = CPI (General). Never spliced with the 2012-base series.
-- id: in_cpi_2024base
-  country: IN
-  name: All-India CPI combined, general index (base 2024=100)
-  source: MoSPI
-  source_series: "getCPIData?base_year=2024&series=Current&state_code=1&sector_code=3&division_code=0"
-  unit: index
-  frequency: monthly
-  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
-
-# MoSPI's official back series on the 2024 base (2013-2024). Kept separate from the live series.
-- id: in_cpi_2024base_back
-  country: IN
-  name: All-India CPI combined, general index (base 2024=100), official back series
-  source: MoSPI
-  source_series: "getCPIData?base_year=2024&series=Back&state_code=1&sector_code=3&division_code=0"
-  unit: index
-  frequency: monthly
-  expect_updates: false   # closed historical series: skip the staleness check
-  source_url: https://esankhyiki.mospi.gov.in/macroindicators?product=cpi
-
-# FBIL par yield at the 10-year tenor (semi-annual YTM), from the daily G-sec valuation file.
-# This is a curve point, not the yield of a specific benchmark bond.
-- id: in_10y
-  country: IN
-  name: India 10-year G-sec par yield (FBIL, semi-annual)
-  source: FBIL
-  source_series: "gsec_par:10"
+  fetcher: RBIRelease
+  source_series: "mmo:wacr"
   unit: percent
   frequency: daily
-  source_url: https://www.fbil.org.in/#/benchmark/gsec
+  note: "RBI daily Money Market Operations release; dated to the 'as on' date. No value on non-trading days."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
 
-- id: inr_usd
+- id: in_treps_rate
   country: IN
-  name: INR per USD, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 1 USD"
-  unit: inr_per_usd
+  topic: liquidity
+  name: "TREPS (triparty repo) overnight weighted average rate"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:treps_rate"
+  unit: percent
   frequency: daily
-  source_url: https://www.fbil.org.in/
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_market_repo_wavg
+  country: IN
+  topic: liquidity
+  name: "Market repo overnight weighted average rate (RBI)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:market_repo_rate"
+  unit: percent
+  frequency: daily
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_net_liquidity
+  country: IN
+  topic: liquidity
+  name: "Net liquidity injected by RBI under LAF (outstanding incl. today's operations)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:net_liquidity"
+  unit: inr_crore
+  frequency: daily
+  note: "Positive = net injection (liquidity deficit), negative = net absorption (surplus), as published."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_sdf_amount
+  country: IN
+  topic: liquidity
+  name: "Standing Deposit Facility (SDF) amount parked with RBI"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:sdf_amount"
+  unit: inr_crore
+  frequency: daily
+  note: "Absorption, shown as a positive amount."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_msf_amount
+  country: IN
+  topic: liquidity
+  name: "Marginal Standing Facility (MSF) borrowing from RBI"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:msf_amount"
+  unit: inr_crore
+  frequency: daily
+  skip_jumps: true   # usually near zero, so any use looks extreme
+  note: "Injection, shown as a positive amount."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_net_durable_liquidity
+  country: IN
+  topic: liquidity
+  name: "Net durable liquidity"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "mmo:net_durable_liquidity"
+  unit: inr_crore
+  frequency: fortnightly
+  note: "Surplus (+) / deficit (-); dated to its own 'as on' date, which lags the release by weeks."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_m3
+  country: IN
+  topic: liquidity
+  name: "Money supply (M3)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:m3"
+  unit: inr_crore
+  frequency: fortnightly
+  note: "RBI Weekly Statistical Supplement, Table 6."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_m3_yoy
+  country: IN
+  topic: liquidity
+  name: "Money supply (M3), YoY growth %"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:m3_yoy"
+  unit: percent
+  frequency: fortnightly
+  note: "As published by RBI."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_bank_credit_yoy
+  country: IN
+  topic: liquidity
+  name: "Scheduled commercial banks: bank credit growth, YoY %"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:bank_credit_yoy"
+  unit: percent
+  frequency: fortnightly
+  note: "As published. Includes the HDFC merger effect from July 2023."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_deposits_yoy
+  country: IN
+  topic: liquidity
+  name: "Scheduled commercial banks: aggregate deposits growth, YoY %"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:deposits_yoy"
+  unit: percent
+  frequency: fortnightly
+  note: "As published."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fx_reserves
+  country: IN
+  topic: external
+  name: "Foreign exchange reserves, total (US$ mn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:fx_reserves_total"
+  unit: usd_million
+  frequency: weekly
+  note: "RBI Weekly Statistical Supplement Table 2; dated to the 'as on' Friday."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fx_fca
+  country: IN
+  topic: external
+  name: "Foreign exchange reserves: foreign currency assets (US$ mn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:fx_fca"
+  unit: usd_million
+  frequency: weekly
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fx_gold
+  country: IN
+  topic: external
+  name: "Foreign exchange reserves: gold (US$ mn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "wss:fx_gold"
+  unit: usd_million
+  frequency: weekly
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_current_account
+  country: IN
+  topic: external
+  name: "Current account balance, monthly BoP (US$ bn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "bop:current_account"
+  unit: usd_billion
+  frequency: monthly
+  known_gaps: ["2026-04-01"]   # Oct 2025-Mar 2026 not yet published (monthly BoP began Apr 2026)
+  note: "Negative = deficit. Monthly BoP releases began with April 2026; 2025 months are the year-ago column (partially revised)."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fdi_net
+  country: IN
+  topic: external
+  name: "Net foreign direct investment, monthly BoP (US$ bn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "bop:fdi_net"
+  unit: usd_billion
+  frequency: monthly
+  known_gaps: ["2026-04-01"]   # Oct 2025-Mar 2026 not yet published (monthly BoP began Apr 2026)
+  note: "FDI into India (net) minus Indian FDI abroad (net); positive = net inflow."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fdi_india_net
+  country: IN
+  topic: external
+  name: "FDI into India, net, monthly BoP (US$ bn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "bop:fdi_india_net"
+  unit: usd_billion
+  frequency: monthly
+  known_gaps: ["2026-04-01"]   # Oct 2025-Mar 2026 not yet published (monthly BoP began Apr 2026)
+  note: "Positive = net inflow."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+- id: in_fpi_net
+  country: IN
+  topic: external
+  name: "Net foreign portfolio investment, monthly BoP (US$ bn)"
+  source: RBI
+  fetcher: RBIRelease
+  source_series: "bop:fpi_net"
+  unit: usd_billion
+  frequency: monthly
+  known_gaps: ["2026-04-01"]   # Oct 2025-Mar 2026 not yet published (monthly BoP began Apr 2026)
+  note: "Positive = net inflow."
+  source_url: https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx
+
+

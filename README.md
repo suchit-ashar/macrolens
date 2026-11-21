@@ -1,16 +1,19 @@
 # MacroLens
 
-A macro dashboard that tracks official data for India, the US and other leading
-economies, and turns it into plain-language regime views, global linkages and
-historical scenarios. Educational only; not investment advice.
+A macro dashboard for investors, businesses and FDI decision-makers. It tracks official
+data for India and the US (rates, currency, bonds, liquidity, inflation, growth, external
+sector, fiscal) and updates automatically every day.
 
 ## Status
-Phase 1 in progress: all 10 MVP indicators have fetchers and run daily via GitHub Actions.
-- US: FRED (needs `FRED_API_KEY`).
-- India: RBI repo rate (2008 onwards; new changes dated from the MPC release), MoSPI CPI
-  2024 base (live + back series), FBIL USD/INR reference rate and 10-year G-sec par yield.
-  None of these need keys.
-- Fully automatic: no manual data entry or downloads in the daily run.
+143 series, all fetched automatically every day at 07:00 IST (GitHub Actions), in the order
+users consult them: policy rates, currency, bonds, liquidity, inflation, growth, external,
+fiscal, jobs, commodities. Coverage: India first, then US, euro area and China.
+
+Sources: RBI (policy rates, daily liquidity, forex reserves, M3/credit, BoP), FBIL (bond
+curve, T-bills, CDs, MIBOR, INR reference rates), MoSPI (CPI, GDP, PLFS), Union Budget and
+CGA (deficits, monthly accounts), Ministry of Commerce (trade), FRED (US, ECB, FX), IMF WEO
+(debt, deficits, projections) and World Bank. Only FRED needs a (free) key.
+No manual data entry; IMF projections and budget estimates are separate, labelled series.
 
 - Every run ends with quality checks (gaps, unusual jumps, stale or malformed series).
 - Dashboard: Streamlit app over a DuckDB cache of the Parquet files.
@@ -51,6 +54,3 @@ pytest                    # all tests should pass
 - Raw data is never modified; derived series are labelled.
 - Revisions are stored as vintages, not overwritten.
 - Series breaks (e.g. India's 2026 CPI/GDP/IIP base changes) are never spliced.
-
-## Disclaimer
-For education only. Not investment advice or a research recommendation.

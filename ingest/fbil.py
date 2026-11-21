@@ -7,6 +7,8 @@ source_series formats (config/indicators.yaml):
   refrates:<subProdName>   e.g. "refrates:INR / 1 USD"  daily reference rate, history from July 2018
   gsec_par:<tenor years>   e.g. "gsec_par:10"           par yield from the daily G-sec valuation
                                                         workbook ("Par Yield" sheet, semi-annual YTM)
+  <endpoint>[:<tenor>]     e.g. "tbill:91 Days", "ovnmibor", "mror", "cd:3 Months"
+                           money-market benchmarks (T-bill, CD, MIBOR, market repo, SORR)
 """
 import io
 import json
@@ -62,6 +64,42 @@ def fetch_refrates(sub_prod: str, start: date = REFRATES_START, end: date | None
                        "value": pd.to_numeric([x["rate"] for x in picked], errors="coerce")})
     df = df.dropna().drop_duplicates("date", keep="last").sort_values("date").reset_index(drop=True)
     meta = {"last_updated": max(x["displayTime"] for x in picked),
+            "fetched_at": fetched_at.isoformat(timespec="seconds")}
+    return df, meta
+
+
+RATE_ENDPOINTS = {"tbill", "cd", "ovnmibor", "termmibor", "mror", "sorr"}
+
+
+def fetch_rates(endpoint: str, tenor: str | None, start: date = REFRATES_START, end: date | None = None,
+                session=None, save_raw: bool = True):
+    """Daily FBIL money-market benchmark, e.g. ('tbill', '91 Days') or ('ovnmibor', None).
+
+    tbill/cd/termmibor publish several tenors per day (field tenorName or tenor); pick one.
+    ovnmibor/mror/sorr publish one overnight rate per day; over weekends and holidays its
+    tenor reads 3D etc., so no tenor filter is applied.
+    """
+    end = end or date.today()
+    rows = []
+    for a, b in _year_chunks(start, end):
+        r = get(f"{BASE}/{endpoint}/fetchfiltered", {"fromDate": a.isoformat(), "toDate": b.isoformat(),
+                                                     "authenticated": "false"}, session=session)
+        rows.extend(r.json())
+    fetched_at = _now()
+    if save_raw:
+        RAW_DIR.mkdir(parents=True, exist_ok=True)
+        (RAW_DIR / f"{endpoint}_{fetched_at:%Y%m%d}.json").write_text(json.dumps(rows), encoding="utf-8")
+    if tenor:
+        picked = [x for x in rows if str(x.get("tenorName") or x.get("tenor") or "").strip().lower() == tenor.lower()]
+    else:
+        picked = rows
+    if not picked:
+        names = sorted({str(x.get("tenorName") or x.get("tenor")) for x in rows})
+        raise FbilError(f"No FBIL {endpoint} rates for tenor '{tenor}' (tenors seen: {names})")
+    df = pd.DataFrame({"date": pd.to_datetime([x["processRunDate"][:10] for x in picked]),
+                       "value": pd.to_numeric([x["rate"] for x in picked], errors="coerce")})
+    df = df.dropna().drop_duplicates("date", keep="last").sort_values("date").reset_index(drop=True)
+    meta = {"last_updated": max(x.get("displayTime") or x["processRunDate"] for x in picked),
             "fetched_at": fetched_at.isoformat(timespec="seconds")}
     return df, meta
 
@@ -126,4 +164,6 @@ def fetch(source_series: str, since: date | None = None, session=None):
         return fetch_refrates(arg, session=session)
     if kind == "gsec_par":
         return fetch_gsec_par(float(arg), since=since, session=session)
+    if kind in RATE_ENDPOINTS:
+        return fetch_rates(kind, arg or None, session=session)
     raise FbilError(f"Unknown FBIL source_series '{source_series}'")

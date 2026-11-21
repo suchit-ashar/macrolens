@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parent.parent
 CLEAN_DIR = ROOT / "data" / "clean"
 DB_PATH = ROOT / "data" / "macrolens.duckdb"
 
-INDICATOR_COLUMNS = ["id", "country", "name", "source", "source_series", "unit", "frequency", "source_url"]
+INDICATOR_COLUMNS = ["id", "country", "topic", "name", "source", "source_series", "unit", "frequency",
+                     "source_url", "note"]
 
 
 def _indicators_frame(registry: dict) -> pd.DataFrame:
@@ -61,7 +62,7 @@ def build(db_path: Path | str = DB_PATH, clean_dir: Path = CLEAN_DIR, registry: 
         CREATE VIEW summary AS
         WITH ranked AS (
             SELECT *, row_number() OVER (PARTITION BY indicator_id ORDER BY date DESC) AS k FROM latest)
-        SELECT i.id AS indicator_id, i.name, i.country, i.unit, i.frequency, i.source, i.source_url,
+        SELECT i.id AS indicator_id, i.name, i.country, i.topic, i.note, i.unit, i.frequency, i.source, i.source_url,
                cur.date, cur.value, prev.date AS prev_date, prev.value AS prev_value,
                cur.release_date, cur.fetched_at, (SELECT min(date) FROM latest l WHERE l.indicator_id = i.id) AS first_date
         FROM indicators i
