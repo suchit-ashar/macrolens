@@ -48,7 +48,9 @@ section[data-testid="stSidebar"]{{background:#F8FAFC;border-right:1px solid {LIN
 section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.55rem .75rem;border-radius:10px;margin:2px 0;width:100%}}
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){{background:{NAVY}}}
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{color:#FFFFFF !important}}
-section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child{{display:none}}
+section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child,
+section[data-testid="stSidebar"] [data-baseweb="radio"] > div:first-child,
+section[data-testid="stSidebar"] [role="radiogroup"] input{{display:none !important}}
 section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:{NAVY}}}
 .sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.35rem;font-weight:700;color:{NAVY};margin:.2rem 0 1rem}}
 .sb-sub{{font-size:.72rem;font-weight:700;color:{MUTED};letter-spacing:.06em;margin:1.2rem 0 .4rem}}
@@ -390,7 +392,7 @@ with st.sidebar:
     st.button("India vs Euro area", width="stretch", on_click=go_to,
               args=("Compare",), kwargs={"compare_set": ["India", "Euro area"]})
 
-t1, t2, t3, t4 = st.columns([4.2, 1.6, 1.5, 2.2])
+t1, t2, t3, t4 = st.columns([3.6, 1.7, 1.8, 2.3])
 with t1:
     st.markdown(f'<div class="tb"><span class="tb-title">{BRAND}</span><span class="tb-tag">Macroeconomic intelligence '
                 'for investors and businesses</span></div>', unsafe_allow_html=True)
@@ -399,7 +401,7 @@ with t2:
 with t3:
     this_year = date.today().year
     span = st.selectbox("Range", list(RANGES), index=1, label_visibility="collapsed", key="range",
-                        format_func=lambda k: f"{this_year - RANGES[k] // 365} – {this_year}" if RANGES[k] else "All history")
+                        format_func=lambda k: f"{this_year - RANGES[k] // 365}–{str(this_year)[2:]}" if RANGES[k] else "All years")
 with t4:
     st.markdown(f'<div class="tb-upd">⟳ {upd_txt}</div>', unsafe_allow_html=True)
 DAYS = RANGES[span]
@@ -881,11 +883,12 @@ def kpi(icon: str, title: str, sub: str, iid: str, *, df: pd.DataFrame | None = 
             d = (v / prev - 1) * 100
         tone = "#64748B" if good is None else ("#15803D" if (d > 0) == (good == "up") else "#B91C1C")
         change = f'<span class="kpi-d" style="color:{tone}">{"▲" if d > 0 else "▼"} {fmt_change(d, how, unit)}</span>'
-    value = f"{v:.1f}%" if unit == "percent" and how == "pp" else fmt_value(v, unit)
+    short = unit == "percent_of_gdp" or (unit == "percent" and how == "pp")  # "% of GDP" is in the subtitle
+    value = f"{v:.1f}%" if short else fmt_value(v, unit)
     when = period_label(data["date"].iloc[-1], row["frequency"])
     prev_txt = ""
     if prev is not None:
-        pv = f"{prev:.1f}%" if unit == "percent" and how == "pp" else fmt_value(prev, unit)
+        pv = f"{prev:.1f}%" if short else fmt_value(prev, unit)
         prev_txt = f" &nbsp;|&nbsp; Prev: {pv}"
     sig = f'<div class="kpi-f" style="color:{color};margin-top:.15rem">{signal.text}</div>' if signal and signal.text else ""
     return (f'<div class="kpi"><div class="kpi-top">{svg(icon)}<div><div class="kpi-t">{title}</div>'
