@@ -38,14 +38,19 @@ jobs:
       - name: Fetch data
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: python -m ingest.run_all
+        run: |
+          status=0
+          python -m ingest.run_all || status=$?
+          # Show the run report on the run's summary page as well.
+          { echo '```'; cat data/logs/last_run.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Commit updated data
         if: always()
         run: |
           git config user.name "macrolens-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/clean/*.parquet || true
+          git add data/clean/*.parquet data/logs/last_run.txt || true
           git diff --cached --quiet || git commit -m "Data update $(date -u +%Y-%m-%d)"
           git push
 

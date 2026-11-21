@@ -61,28 +61,41 @@ def main(only: list[str] | None = None) -> int:
     load_dotenv()
     CLEAN_DIR.mkdir(parents=True, exist_ok=True)
     registry = load_registry()
-    failures, done, skipped = [], [], []
+    failures, done, skipped, lines = [], [], [], []
 
+    def log(line: str):
+        print(line)
+        lines.append(line)
+
+    started = datetime.now(timezone.utc)
     for entry in registry.values():
         if only and entry["id"] not in only:
             continue
         if fetcher_key(entry) not in FETCHERS or entry["source_series"] == "TBD":
             skipped.append(entry["id"])
             continue
+        t0 = datetime.now(timezone.utc)
         try:
             merged = update_indicator(entry)
             last = latest_vintage(merged).iloc[-1]
             done.append(entry["id"])
-            print(f"OK    {entry['id']:<22} {last['date'].date()}  {last['value']:>10.2f} {entry['unit']}")
+            log(f"OK    {entry['id']:<26} {last['date'].date()}  {last['value']:>14.2f} {entry['unit']}"
+                f"  ({(datetime.now(timezone.utc) - t0).total_seconds():.0f}s)")
         except Exception as e:  # keep going; report at the end
             failures.append(entry["id"])
-            print(f"FAIL  {entry['id']:<22} {type(e).__name__}: {e}")
+            log(f"FAIL  {entry['id']:<26} [{fetcher_key(entry)}] {type(e).__name__}: {str(e)[:300]}")
 
-    print(f"\n{len(done)} fetched, {len(failures)} failed, {len(skipped)} not built yet"
-          + (f": {', '.join(skipped)}" if skipped else ""))
+    log(f"\n{len(done)} fetched, {len(failures)} failed, {len(skipped)} not built yet"
+        + (f": {', '.join(skipped)}" if skipped else ""))
 
     issues = quality_report(registry, only)
     errors = [i for i in issues if i.severity == "error"]
+    lines += [f"QUALITY {i.severity.upper():<5} {i.indicator_id:<26} {i.check:<9} {i.message}" for i in issues]
+    # Committed by the workflow so failures can be read without opening the Actions log.
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    header = (f"Run started {started:%Y-%m-%d %H:%M} UTC, took {(datetime.now(timezone.utc) - started).total_seconds():.0f}s. "
+              f"{len(done)} ok, {len(failures)} failed, {len(errors)} quality error(s).\n")
+    (LOG_DIR / "last_run.txt").write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
     return 1 if failures or errors else 0
 
 
