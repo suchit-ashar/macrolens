@@ -306,6 +306,10 @@ def fetch(source_series: str, since=None, session=None, save_raw: bool = True):
         raise TradeError(f"Unknown trade series '{source_series}' (use pib:<{'|'.join(SERIES)}>)")
     releases = load_releases(since, session, save_raw)
     if not releases:
+        if since is not None:
+            # Up to date: the next month's release is not out yet. Nothing new is not an error.
+            return (pd.DataFrame(columns=["date", "value"]).astype({"value": float}),
+                    {"last_updated": None, "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
         raise TradeError("No Ministry of Commerce trade releases found on PIB")
     df = combine(releases, series)
     meta = {"last_updated": max((r.get("release_date") or "" for r in releases), default="") or None,

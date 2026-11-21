@@ -145,3 +145,16 @@ def test_listing_filter_not_applied_raises(monkeypatch):
     s = FakeSession(listings={(2026, 11): LISTING.replace('selected="selected" value="16"', 'value="16"')})
     with pytest.raises(trade.TradeError, match="ministry filter"):
         trade.fetch("pib:merch_exports", session=s)
+
+
+def test_up_to_date_with_empty_cache_returns_no_rows():
+    """GitHub Actions starts with an empty download cache; if the stored data is already current,
+    there is nothing new to fetch and that must not be an error."""
+    class NoNetwork:
+        def get(self, *a, **k):
+            raise AssertionError("no request expected")
+
+        post = get
+
+    df, meta = trade.fetch("pib:total_exports", since=date(2026, 10, 1), session=NoNetwork(), save_raw=False)
+    assert df.empty and meta["last_updated"] is None
