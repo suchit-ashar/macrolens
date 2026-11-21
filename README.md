@@ -7,8 +7,10 @@ historical scenarios. Educational only; not investment advice.
 ## Status
 Phase 1 in progress: all 10 MVP indicators have fetchers and run daily via GitHub Actions.
 - US: FRED (needs `FRED_API_KEY`).
-- India: RBI repo rate (home page), MoSPI CPI 2024 base (live + back series), FBIL USD/INR
-  reference rate and 10-year G-sec par yield. None of these need keys.
+- India: RBI repo rate (2008 onwards; new changes dated from the MPC release), MoSPI CPI
+  2024 base (live + back series), FBIL USD/INR reference rate and 10-year G-sec par yield.
+  None of these need keys.
+- Fully automatic: no manual data entry or downloads in the daily run.
 
 - Every run ends with quality checks (gaps, unusual jumps, stale or malformed series).
 - Dashboard: Streamlit app over a DuckDB cache of the Parquet files.

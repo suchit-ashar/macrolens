@@ -46,7 +46,7 @@ Every fetcher is called as `fetch(source_series, since) -> (DataFrame[date, valu
 | FRED | `ingest/fred.py` | FRED series id | API key required |
 | FBIL | `ingest/fbil.py` | `refrates:<pair>`, `gsec_par:<tenor>` | Public JSON API at fbil.org.in/wasdm. Public data lags about a week. G-sec par yield comes from one xlsx per valuation day ("Par Yield" sheet, semi-annual), downloaded incrementally from 2025-01-01 and cached in `data/raw/fbil/gsec/` |
 | MoSPI | `ingest/mospi.py` | `getCPIData?<query>` | api.mospi.gov.in/api/cpi. No token: 10 rows per page, so queries are filtered to one series and paged |
-| RBI | `ingest/rbi.py` | `homepage:<label>` | Scrapes the "Policy Rates" box: current value only, dated on the day we see it |
+| RBI | `ingest/rbi.py` | `homepage:<label>` | Rate in force from the home page "Policy Rates" box. For the repo rate, the effective date is taken automatically from the matching MPC statement in RBI's recent press-release list; if none matches, the row is dated on the day observed (`meta.date_basis`) |
 
 ## Quality checks (`transform/checks.py`)
 Run on the latest vintage of every stored series at the end of `run_all`; results are
@@ -81,9 +81,12 @@ series are drawn as steps extended to today.
 - 2026-11: `in_10y` is FBIL's 10-year par yield (a curve point), not a specific benchmark bond.
 - 2026-11: CPI 2024 base: live series (`in_cpi_2024base`, 2025 onwards) and MoSPI's official
   back series (`in_cpi_2024base_back`, 2013-2024) are kept as separate ids, never spliced.
-- 2026-11: Repo rate history before the first daily run is not loaded yet. Source chosen:
-  RBI Handbook of Statistics, Table 40 (policy rates with effective dates). rbidocs.rbi.org.in
-  serves scripts a bot-check page, so the file is downloaded once by hand and parsed.
+- 2026-11: Everything is fetched automatically; no manual data entry. The only exception was
+  a one-time import of repo-rate history (2008 to Dec 2025) from RBI Handbook Table 40
+  (`ingest/rbi_history.py`), because rbidocs.rbi.org.in shows scripts a bot-check page. That
+  history is stored in the committed Parquet file; new changes come from the daily job.
+- 2026-11: Repo rate 5.25% -> 5.50% on 2026-10-07 (MPC Oct 5-7, 2026), after the Handbook
+  edition; dated from the RBI Governor's Statement of that day.
 - 2026-11: US CPI has no October 2025 value (BLS did not publish it during the federal
   shutdown); recorded as a known gap.
 - 2026-11: Python + DuckDB/Parquet + Streamlit for MVP; Next.js later.
