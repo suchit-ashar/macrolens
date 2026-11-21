@@ -1,4 +1,4 @@
-"""MacroLens dashboard (Streamlit) — design B + C.
+﻿"""MacroLens dashboard (Streamlit) — design B + C.
 
 B: clean finance layout (white, navy, India saffron accent) with a one-line summary.
 C: each topic has its own colour; every card carries a rule-based traffic light
@@ -24,7 +24,8 @@ from storage import db  # noqa: E402
 from transform.checks import run_checks  # noqa: E402
 from transform.normalize import yoy_pct  # noqa: E402
 
-st.set_page_config(page_title="MacroLens", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="MacroLens", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
+BRAND = "MacroLens"
 
 NAVY, SAFFRON, INK, MUTED, LINE = "#0B2545", "#E07B39", "#0B2545", "#64748B", "#E5E7EB"
 # Design C: one colour per topic -> (text/accent, light background)
@@ -42,8 +43,53 @@ SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED"
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 
 st.markdown(f"""<style>
-.block-container{{padding-top:1.6rem;max-width:1320px}}
-[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"]{{display:none}}
+.block-container{{padding-top:3rem;max-width:1380px}}
+section[data-testid="stSidebar"]{{background:#F8FAFC;border-right:1px solid {LINE}}}
+section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.55rem .75rem;border-radius:10px;margin:2px 0;width:100%}}
+section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){{background:{NAVY}}}
+section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{color:#FFFFFF !important}}
+section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child{{display:none}}
+section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:{NAVY}}}
+.sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.35rem;font-weight:700;color:{NAVY};margin:.2rem 0 1rem}}
+.sb-sub{{font-size:.72rem;font-weight:700;color:{MUTED};letter-spacing:.06em;margin:1.2rem 0 .4rem}}
+.tb{{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}}
+.tb-title{{font-size:1.45rem;font-weight:700;color:{NAVY}}}
+.tb-tag{{color:{MUTED};font-size:.92rem;border-left:1px solid {LINE};padding-left:.8rem}}
+.tb-upd{{color:{MUTED};font-size:.85rem;text-align:right;padding-top:.55rem}}
+.ov-h{{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .1rem}}
+.ov-h img{{height:28px;border-radius:4px;border:1px solid {LINE}}}
+.ov-h h1{{font-size:1.9rem;font-weight:700;color:{NAVY};margin:0;padding:0}}
+.ov-ok{{background:#DCFCE7;color:#166534;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
+.ov-warn{{background:#FEF3C7;color:#92400E;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
+.ov-sub{{color:{MUTED};font-size:.98rem;margin:0 0 .9rem}}
+.kpi-grid{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem;margin-bottom:.9rem}}
+.kpi{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:.9rem 1rem}}
+.kpi-top{{display:flex;gap:.6rem;align-items:flex-start}}
+.kpi-top svg{{width:26px;height:26px;stroke:{NAVY};flex:none;margin-top:2px}}
+.kpi-t{{font-weight:700;color:{NAVY};font-size:1rem;line-height:1.2}}
+.kpi-s{{color:{MUTED};font-size:.78rem}}
+.kpi-mid{{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin:.55rem 0 .35rem}}
+.kpi-v{{font-size:1.85rem;font-weight:700;line-height:1}}
+.kpi-d{{font-size:.85rem;font-weight:600;white-space:nowrap;margin-left:.35rem}}
+.kpi-f{{color:{MUTED};font-size:.78rem}}
+.panel{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:1rem 1.1rem}}
+.panel h3{{font-size:1.25rem;font-weight:700;color:{NAVY};margin:0}}
+.panel .ps{{color:{MUTED};font-size:.85rem;margin:.1rem 0 .6rem}}
+.pr{{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto auto;gap:.6rem;align-items:center;padding:.6rem 0;border-bottom:1px solid #F1F5F9}}
+.pr svg{{width:22px;height:22px;stroke:#334155}}
+.pr .n{{font-weight:700;color:{NAVY};font-size:.92rem;line-height:1.2}}
+.pr .n span{{display:block;font-weight:400;color:{MUTED};font-size:.75rem}}
+.pr .v{{font-weight:700;font-size:1rem;text-align:right}}
+.pr .dd{{font-size:.78rem;font-weight:600;text-align:right;white-space:nowrap}}
+.pill{{border-radius:999px;padding:3px 10px;font-size:.75rem;font-weight:600;white-space:nowrap}}
+.kt{{width:100%;border-collapse:collapse;font-size:.9rem}}
+.kt th{{text-align:left;font-size:.72rem;letter-spacing:.05em;color:{MUTED};background:#F8FAFC;padding:.55rem .6rem;font-weight:700}}
+.kt td{{padding:.55rem .6rem;border-bottom:1px solid #F1F5F9;color:{NAVY}}}
+.kt td b{{font-weight:700}} .kt td small{{color:{MUTED};margin-left:.3rem}}
+.kt a{{color:{NAVY};text-decoration:none;border-bottom:1px dotted {MUTED}}}
+.note{{background:#EEF4FB;border:1px solid #D6E4F5;border-radius:12px;padding:.8rem 1rem;color:{NAVY};margin:1rem 0}}
+.note b{{margin-right:.6rem}}
+@media (max-width:1100px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 .ml-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}}
 .ml-brand{{font-size:1.9rem;font-weight:700;color:{NAVY};letter-spacing:-.01em}}
 .ml-brand span{{color:{SAFFRON}}}
@@ -134,9 +180,14 @@ def diff(a: str, b: str) -> pd.DataFrame:
 
 
 # ======================= formatting =======================
+MONEY_UNITS = {"inr_crore", "usd_million", "usd", "eur_million", "jpy_billion", "usd_billion"}
+
+
 def fmt_value(v, unit):
     if v is None or pd.isna(v):
         return "–"
+    if unit in MONEY_UNITS and v < 0:
+        return "−" + fmt_value(-v, unit)
     if unit == "inr_crore":
         return f"₹{v / 1e5:,.2f} lakh cr" if abs(v) >= 1e5 else f"₹{v:,.0f} cr"
     if unit == "usd_million":
@@ -227,6 +278,7 @@ def legend():
 
 # ======================= charts =======================
 DAYS = None  # set by the range control
+COMPARE_CODES = None  # set by the Compare page to filter lines by country
 
 
 def clip(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
@@ -240,6 +292,8 @@ def line(iid: str, label: str, color: str | None = None, dash: str | None = None
     if iid not in ROWS.index:
         return None
     row = ROWS.loc[iid]
+    if COMPARE_CODES is not None and row["country"] not in COMPARE_CODES | {"GLOBAL"}:
+        return None
     data = get(iid) if df is None else df
     if data.empty:
         return None
@@ -282,7 +336,7 @@ def chart(title: str, traces: list, unit: str, src: tuple = (), note: str = "", 
     vals = pd.concat([t["df"]["value"] for t in traces])
     if vals.max() - vals.min() < 1e-9:
         fig.update_yaxes(range=[vals.min() - 1, vals.max() + 1])
-    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+    st.plotly_chart(fig, width="stretch", config={"displaylogo": False})
     src = [i for i in src if i in ROWS.index]
     if src or note:
         links = ", ".join(dict.fromkeys(f'<a href="{ROWS.loc[i, "source_url"]}" target="_blank">{ROWS.loc[i, "source"]}</a>' for i in src))
@@ -306,19 +360,49 @@ def summary_line(parts: list[str]):
 
 # ======================= header =======================
 upd = pd.to_datetime(summary["fetched_at"].dropna(), utc=True).max() if summary["fetched_at"].notna().any() else None
-upd_txt = f"Updated {upd.tz_convert(timezone(timedelta(hours=5, minutes=30))):%d %b %Y, %H:%M} IST" if upd is not None else ""
-st.markdown(f'<div class="ml-head"><div class="ml-brand">MacroLens <span>●</span></div><div class="ml-upd">{upd_txt}</div></div>'
-            '<div class="ml-tag">Official macro and market data for investors and businesses, updated every morning.</div>',
-            unsafe_allow_html=True)
+upd_txt = f"Last updated: {upd.tz_convert(timezone(timedelta(hours=5, minutes=30))):%d %b %Y, %H:%M} IST" if upd is not None else ""
+COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan"]
+FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp"}
+PAGES = {":material/home: Overview": "Overview", ":material/public: Countries": "Countries",
+         ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare",
+         ":material/database: Data sources": "Data sources"}
+st.session_state.setdefault("page", ":material/home: Overview")
+st.session_state.setdefault("country_pick", "India")
+st.session_state.setdefault("compare_set", ["India", "United States", "Euro area", "China", "Japan"])
 
-c1, c2 = st.columns([5, 2])
-with c1:
-    country = st.segmented_control("Country", ["India", "United States", "Euro area", "China", "Japan", "Compare"],
-                                   default="India", label_visibility="collapsed", key="country") or "India"
-with c2:
-    window = st.segmented_control("Chart range", list(RANGES), default="3Y", label_visibility="collapsed",
-                                  key="range") or "3Y"
-DAYS = RANGES[window]
+
+def go_to(page: str, **state):
+    st.session_state["page"] = next(k for k, v in PAGES.items() if v == page)
+    for k, v in state.items():
+        st.session_state[k] = v
+
+
+with st.sidebar:
+    st.markdown(f'<div class="sb-brand"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" '
+                f'rx="1" fill="{SAFFRON}"/><rect x="10" y="7" width="4" height="14" rx="1" fill="#1D4ED8"/><rect x="17" y="3" '
+                f'width="4" height="18" rx="1" fill="{NAVY}"/></svg>{BRAND}</div>', unsafe_allow_html=True)
+    page = PAGES[st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed")]
+    st.markdown('<div class="sb-sub">QUICK COMPARE</div>', unsafe_allow_html=True)
+    st.button("India vs United States", width="stretch", on_click=go_to,
+              args=("Compare",), kwargs={"compare_set": ["India", "United States"]})
+    st.button("India vs China", width="stretch", on_click=go_to,
+              args=("Compare",), kwargs={"compare_set": ["India", "China"]})
+    st.button("India vs Euro area", width="stretch", on_click=go_to,
+              args=("Compare",), kwargs={"compare_set": ["India", "Euro area"]})
+
+t1, t2, t3, t4 = st.columns([4.2, 1.6, 1.5, 2.2])
+with t1:
+    st.markdown(f'<div class="tb"><span class="tb-title">{BRAND}</span><span class="tb-tag">Macroeconomic intelligence '
+                'for investors and businesses</span></div>', unsafe_allow_html=True)
+with t2:
+    country = st.selectbox("Country", COUNTRY_LIST, key="country_pick", label_visibility="collapsed")
+with t3:
+    this_year = date.today().year
+    span = st.selectbox("Range", list(RANGES), index=1, label_visibility="collapsed", key="range",
+                        format_func=lambda k: f"{this_year - RANGES[k] // 365} – {this_year}" if RANGES[k] else "All history")
+with t4:
+    st.markdown(f'<div class="tb-upd">⟳ {upd_txt}</div>', unsafe_allow_html=True)
+DAYS = RANGES[span]
 
 
 # ======================= India =======================
@@ -521,7 +605,7 @@ def yield_curves():
                       legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0), plot_bgcolor="#FFFFFF",
                       paper_bgcolor="#FFFFFF", font=dict(color=INK, size=12))
     fig.update_yaxes(gridcolor="#EEF1F5")
-    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+    st.plotly_chart(fig, width="stretch", config={"displaylogo": False})
     st.markdown('<div class="ml-cap">Source: FBIL par yields (India), FRED (US)</div>', unsafe_allow_html=True)
 
 
@@ -541,7 +625,7 @@ def gdp_mix():
                       legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0), plot_bgcolor="#FFFFFF",
                       paper_bgcolor="#FFFFFF", font=dict(color=INK, size=12))
     fig.update_yaxes(gridcolor="#EEF1F5")
-    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+    st.plotly_chart(fig, width="stretch", config={"displaylogo": False})
     st.markdown('<div class="ml-cap">Source: MoSPI national accounts. Imports shown as negative.</div>', unsafe_allow_html=True)
 
 
@@ -686,8 +770,13 @@ def japan():
                 'automatically.</div>', unsafe_allow_html=True)
 
 
-def compare():
-    legend()
+def compare(codes: set | None = None):
+    """Cross-country charts; `codes` (e.g. {'IN', 'US'}) limits which countries' lines are drawn."""
+    global COMPARE_CODES
+    COMPARE_CODES = codes
+    if codes is not None and not codes:
+        st.info("Pick at least one country above.")
+        return
     pair(lambda: chart("Policy rates", [line("in_repo_rate", "RBI repo", SAFFRON), line("us_policy_rate", "Fed (upper)", "#1D4ED8"),
                                         line("ea_ecb_deposit_rate", "ECB deposit", "#047857")], "%",
                        ("in_repo_rate", "us_policy_rate", "ea_ecb_deposit_rate")),
@@ -716,26 +805,471 @@ def compare():
           note="India imports most of its oil, so oil prices feed into inflation, the current account and the rupee.")
 
 
-VIEWS = {"India": india, "United States": united_states, "Euro area": euro_area, "China": china, "Japan": japan,
-         "Compare": compare}
-VIEWS[country]()
+# ======================= overview (reference design) =======================
+ICON = {
+    "gdp": '<path d="M3 21h18M5 21V12h3v9M10.5 21V7h3v14M16 21V3h3v18"/>',
+    "infl": '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
+    "jobs": '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20M16 4.3a3.5 3.5 0 0 1 0 7.4M21.5 20v-1.5a4.5 4.5 0 0 0-3.4-4.4"/>',
+    "debt": '<ellipse cx="12" cy="5.5" rx="8" ry="2.8"/><path d="M4 5.5v6.5c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V5.5M4 12v6.3c0 1.6 3.6 2.8 8 2.8s8-1.2 8-2.8V12"/>',
+    "bank": '<path d="M3 21h18M3 10h18M5 6.5L12 3l7 3.5M4.5 10v11M19.5 10v11M8.5 13.5v4M12 13.5v4M15.5 13.5v4"/>',
+    "fx": '<circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1M12 6.5v11"/>',
+    "yield": '<path d="M3 17l6-6 4 4 8-8M14.5 7H21v6.5"/>',
+    "shield": '<path d="M12 3l8 3.5v5.5c0 4.8-3.4 7.9-8 9-4.6-1.1-8-4.2-8-9V6.5z"/>',
+    "drop": '<path d="M12 3.5l5.6 7.4a6.6 6.6 0 1 1-11.2 0z"/>',
+    "scale": '<path d="M7 20h10M12 4v16M5 7l7-2 7 2M5 7l-3 6.5a3 3 0 0 0 6 0zM19 7l-3 6.5a3 3 0 0 0 6 0z"/>',
+    "ship": '<path d="M3 18l-1-5h20l-2 5M5 13V8h9l4 5M8 8V4h3"/><path d="M2 21c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/>',
+    "credit": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/>',
+    "flow": '<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
+}
+LEVEL_COLOR = {"good": "#15803D", "watch": "#B45309", "bad": "#B91C1C", "neutral": NAVY}
 
-# ======================= data footer =======================
-st.divider()
-with st.expander("About the data: sources, quality checks and downloads"):
+
+def svg(name: str) -> str:
+    return (f'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+            f'{ICON.get(name, ICON["gdp"])}</svg>')
+
+
+def spark(df: pd.DataFrame, color: str, n: int = 24) -> str:
+    """Tiny area sparkline (last n points) as inline SVG."""
+    d = df.dropna().tail(n)
+    if len(d) < 2:
+        return ""
+    v = d["value"].astype(float).tolist()
+    lo, hi = min(v), max(v)
+    rng = (hi - lo) or 1.0
+    w, h = 96, 34
+    pts = [(i * w / (len(v) - 1), h - 3 - (x - lo) / rng * (h - 6)) for i, x in enumerate(v)]
+    line_pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+    area = f"0,{h} " + line_pts + f" {w},{h}"
+    return (f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}"><polygon points="{area}" fill="{color}" fill-opacity=".12"/>'
+            f'<polyline points="{line_pts}" fill="none" stroke="{color}" stroke-width="1.8"/></svg>')
+
+
+def fmt_change(d: float, how: str, unit: str) -> str:
+    if how == "bp":
+        return f"{d * 100:+.0f} bp"
+    if how == "pp":
+        return f"{d:+.1f} pp"
+    if how == "pct":
+        return f"{d:+.1f}%"
+    return fmt_delta(d, unit)
+
+
+def kpi(icon: str, title: str, sub: str, iid: str, *, df: pd.DataFrame | None = None, unit: str | None = None,
+        how: str = "pp", good: str | None = None, signal: sg.Signal | None = None) -> str:
+    """Reference-style KPI card: icon, title, value coloured by signal, change, sparkline, period and previous."""
+    if iid not in ROWS.index:
+        return ""
+    row = ROWS.loc[iid]
+    data = (get(iid) if df is None else df).dropna()
+    if data.empty:
+        return ""
+    unit = unit or row["unit"]
+    v, prev = float(data["value"].iloc[-1]), (float(data["value"].iloc[-2]) if len(data) > 1 else None)
+    prev_date = data["date"].iloc[-2] if len(data) > 1 else None
+    if row["frequency"] == "event" and len(data) > 1:  # previous = rate before the last change
+        ch = data[data["value"].diff().fillna(0) != 0]
+        if not ch.empty:
+            before = data[data["date"] < ch["date"].iloc[-1]]
+            prev, prev_date = float(before["value"].iloc[-1]), before["date"].iloc[-1]
+    level = signal.level if signal and signal.text else "neutral"
+    color = LEVEL_COLOR[level]
+    change = ""
+    if prev is not None and abs(v - prev) > 1e-12:
+        d = v - prev
+        if how == "pct" and prev:
+            d = (v / prev - 1) * 100
+        tone = "#64748B" if good is None else ("#15803D" if (d > 0) == (good == "up") else "#B91C1C")
+        change = f'<span class="kpi-d" style="color:{tone}">{"▲" if d > 0 else "▼"} {fmt_change(d, how, unit)}</span>'
+    value = f"{v:.1f}%" if unit == "percent" and how == "pp" else fmt_value(v, unit)
+    when = period_label(data["date"].iloc[-1], row["frequency"])
+    prev_txt = ""
+    if prev is not None:
+        pv = f"{prev:.1f}%" if unit == "percent" and how == "pp" else fmt_value(prev, unit)
+        prev_txt = f" &nbsp;|&nbsp; Prev: {pv}"
+    sig = f'<div class="kpi-f" style="color:{color};margin-top:.15rem">{signal.text}</div>' if signal and signal.text else ""
+    return (f'<div class="kpi"><div class="kpi-top">{svg(icon)}<div><div class="kpi-t">{title}</div>'
+            f'<div class="kpi-s">{sub}</div></div></div><div class="kpi-mid"><div><span class="kpi-v" style="color:{color}">'
+            f'{value}</span>{change}</div>{spark(data, color if level != "neutral" else "#1D4ED8")}</div>'
+            f'<div class="kpi-f">{when}{prev_txt}</div>{sig}</div>')
+
+
+def kpi_row(items: list[str]):
+    html = "".join(i for i in items if i)
+    if html:
+        st.markdown(f'<div class="kpi-grid">{html}</div>', unsafe_allow_html=True)
+
+
+def pulse_row(icon: str, name: str, sub: str, iid: str, *, df: pd.DataFrame | None = None, unit: str | None = None,
+              how: str = "abs", good: str | None = None, status: tuple[str, str] | None = None) -> str:
+    if iid not in ROWS.index:
+        return ""
+    data = (get(iid) if df is None else df).dropna()
+    if data.empty:
+        return ""
+    row = ROWS.loc[iid]
+    unit = unit or row["unit"]
+    v = float(data["value"].iloc[-1])
+    prev = float(data["value"].iloc[-2]) if len(data) > 1 else None
+    dd = ""
+    if prev is not None and abs(v - prev) > 1e-12:
+        d = (v / prev - 1) * 100 if how == "pct" and prev else v - prev
+        tone = "#64748B" if good is None else ("#15803D" if (d > 0) == (good == "up") else "#B91C1C")
+        dd = f'<span style="color:{tone}">{"▲" if d > 0 else "▼"} {fmt_change(d, how, unit)}</span>'
+    level, label = status or ("neutral", "")
+    _, pbg, pfg = LIGHT[level]
+    pill = f'<span class="pill" style="background:{pbg};color:{pfg}">{label}</span>' if label else "<span></span>"
+    value = f"{v:+.2f} pp" if unit == "pp_spread" else (f"{v:.1f}%" if unit == "percent" else fmt_value(v, unit))
+    when = period_label(data["date"].iloc[-1], row["frequency"])
+    return (f'<div class="pr">{svg(icon)}<div class="n">{name}<span>{sub}, {when}</span></div>'
+            f'<div class="v" style="color:{LEVEL_COLOR[level]}">{value}</div><div class="dd">{dd}</div>{pill}</div>')
+
+
+def change_status(df: pd.DataFrame, days: int, up: tuple[str, str], down: tuple[str, str], flat=("neutral", "Stable"),
+                  tol: float = 0.0) -> tuple[str, str] | None:
+    """Status pill from the change over `days` (or vs the previous point when days == 0)."""
+    d = df.dropna()
+    if len(d) < 2:
+        return None
+    ago = sg.value_ago(d, days) if days else float(d["value"].iloc[-2])
+    if ago is None:
+        return None
+    ch = float(d["value"].iloc[-1]) - ago
+    return flat if abs(ch) <= tol else (up if ch > 0 else down)
+
+
+def level_status(v, rules: list[tuple[float, str, str]], else_: tuple[str, str]) -> tuple[str, str] | None:
+    """First rule (threshold, level, label) with v >= threshold wins."""
+    if v is None:
+        return None
+    for th, lv, lb in rules:
+        if v >= th:
+            return lv, lb
+    return else_
+
+
+def table_rows(specs: list[tuple]) -> tuple[str, pd.DataFrame]:
+    """Indicator table: (name, iid, df or None, unit, frequency label)."""
+    html, rows = [], []
+    for name, iid, df, unit, freq in specs:
+        if iid not in ROWS.index:
+            continue
+        data = (get(iid) if df is None else df).dropna()
+        if data.empty:
+            continue
+        r = ROWS.loc[iid]
+        u = unit or r["unit"]
+        f = (lambda x: f"{x:.2f}%") if u == "percent" else (lambda x: fmt_value(x, u))
+        cur = (float(data["value"].iloc[-1]), period_label(data["date"].iloc[-1], r["frequency"]))
+        prv = (float(data["value"].iloc[-2]), period_label(data["date"].iloc[-2], r["frequency"])) if len(data) > 1 else None
+        html.append(f'<tr><td>{name}</td><td><b>{f(cur[0])}</b><small>({cur[1]})</small></td>'
+                    f'<td>{f(prv[0]) + "<small>(" + prv[1] + ")</small>" if prv else "–"}</td><td>{freq}</td>'
+                    f'<td><a href="{r["source_url"]}" target="_blank">{r["source"]} ↗</a></td></tr>')
+        rows.append({"indicator": name, "latest": cur[0], "latest_period": cur[1], "previous": prv[0] if prv else None,
+                     "previous_period": prv[1] if prv else None, "frequency": freq, "source": r["source"],
+                     "source_url": r["source_url"]})
+    return "".join(html), pd.DataFrame(rows)
+
+
+def growth_inflation_chart(gdp: pd.DataFrame, gdp_name: str, infl: pd.DataFrame, infl_name: str, note: str = ""):
+    fig = go.Figure()
+    cut = pd.Timestamp(date.today()) - pd.Timedelta(days=DAYS) if DAYS else None
+    for df, name, color in [(gdp, gdp_name, "#1E3A8A"), (infl, infl_name, "#16A34A")]:
+        if df is None or df.empty:
+            continue
+        d = df[df["date"] >= cut] if cut is not None else df
+        fig.add_trace(go.Scatter(x=d["date"], y=d["value"], name=name, mode="lines+markers",
+                                 line=dict(color=color, width=2.4), marker=dict(size=5)))
+    fig.add_hline(y=0, line_color="#CBD5E1")
+    fig.update_layout(height=330, margin=dict(l=8, r=8, t=10, b=8), yaxis_title="%", hovermode="x unified",
+                      legend=dict(orientation="h", y=-0.15, x=0.25), plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF",
+                      font=dict(color=INK, size=12))
+    fig.update_xaxes(showgrid=False, linecolor=LINE)
+    fig.update_yaxes(gridcolor="#EEF1F5", ticksuffix="%")
+    st.plotly_chart(fig, width="stretch", config={"displaylogo": False})
+    if note:
+        st.markdown(f'<div class="ml-cap">{note}</div>', unsafe_allow_html=True)
+
+
+def overview(c: str):
+    q = quality(stamp)
+    ok = int((q["severity"] == "error").sum()) == 0
+    badge = '<span class="ov-ok">✓ Data verified</span>' if ok else '<span class="ov-warn">Data check pending</span>'
+    st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[c]}.png" alt=""><h1>{c} | Economic overview</h1>'
+                f'{badge}</div><div class="ov-sub">Key macroeconomic indicators, trends and outlook for {c}, '
+                'from official sources.</div>', unsafe_allow_html=True)
+    spec = COUNTRY_SPECS[c]()
+    kpi_row(spec["kpis"])
+    if spec.get("kpis2"):
+        kpi_row(spec["kpis2"])
+    left, right = st.columns([1.35, 1], gap="medium")
+    with left:
+        with st.container(border=True):
+            st.markdown(f'<h3 style="margin:0;color:{NAVY};font-size:1.25rem">Growth and inflation</h3>'
+                        f'<div style="color:{MUTED};font-size:.85rem">{spec["chart_sub"]}</div>', unsafe_allow_html=True)
+            growth_inflation_chart(*spec["chart"])
+    with right:
+        rows = "".join(r for r in spec["pulse"] if r)
+        st.markdown(f'<div class="panel"><h3>Economic pulse</h3><div class="ps">High-frequency indicators and trends</div>'
+                    f'{rows or "<p>No high-frequency data yet.</p>"}</div>', unsafe_allow_html=True)
+    html, table = table_rows(spec["table"])
+    with st.container(border=True):
+        h1, h2 = st.columns([4, 1])
+        h1.markdown(f'<h3 style="margin:0;color:{NAVY};font-size:1.25rem">Explore key indicators</h3>'
+                    f'<div style="color:{MUTED};font-size:.85rem">Latest data for {c} with sources</div>',
+                    unsafe_allow_html=True)
+        h2.download_button("⤓ Download data (CSV)", table.to_csv(index=False).encode("utf-8"),
+                           file_name=f"macrolens_{FLAGS[c]}_key_indicators.csv", mime="text/csv", width="stretch")
+        st.markdown(f'<table class="kt"><tr><th>INDICATOR</th><th>LATEST</th><th>PREVIOUS</th><th>FREQUENCY</th>'
+                    f'<th>SOURCE</th></tr>{html}</table>', unsafe_allow_html=True)
+    if spec.get("note"):
+        st.markdown(f'<div class="note"><b>ⓘ Summary (rule-based):</b>{spec["note"]}</div>', unsafe_allow_html=True)
+
+
+def _first(df: pd.DataFrame):
+    return None if df is None or df.empty else float(df["value"].iloc[-1])
+
+
+def spec_india():
+    infl, liq = last("in_cpi_inflation"), last("in_net_liquidity")
+    stance, rupee = sg.policy_stance(get("in_repo_rate")), sg.local_currency(get("inr_usd"))
+    g = last("in_gdp_growth")
+    credit = last("in_bank_credit_yoy")
+    parts = [stance.text and f"{stance.text}",
+             infl is not None and f"inflation {infl:.2f}% is {sg.inflation_band(infl, 2, 6, 4).text}",
+             g is not None and f"real GDP growth {g:.1f}% ({period_label(get('in_gdp_growth')['date'].iloc[-1], 'quarterly')})",
+             rupee.text, sg.liquidity(liq).text]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, YoY (2022-23 base)", "in_gdp_growth", good="up", signal=sg.growth(g, 7, 5)),
+                 kpi("infl", "Inflation", "CPI, YoY (2024 base)", "in_cpi_inflation", good="down",
+                     signal=sg.inflation_band(infl, 2, 6, 4)),
+                 kpi("jobs", "Unemployment", "PLFS, CWS, age 15+", "in_unemployment", good="down",
+                     signal=sg.trend_lower_is_better(get("in_unemployment"), 180, "unemployment")),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "in_gov_debt_gdp", good="down",
+                     signal=sg.at_most(last("in_gov_debt_gdp"), 60, "the 60% FRBM anchor"))],
+        "kpis2": [kpi("bank", "Repo rate", "RBI policy rate", "in_repo_rate", how="bp", signal=stance),
+                  kpi("fx", "Rupee", "₹ per US$ (FBIL reference)", "inr_usd", how="pct", good="down", signal=rupee),
+                  kpi("yield", "10Y G-sec yield", "FBIL par yield", "in_10y", how="bp", signal=sg.yield_move(get("in_10y"))),
+                  kpi("shield", "Forex reserves", "RBI, weekly", "in_fx_reserves", how="pct", good="up",
+                      signal=sg.reserves(get("in_fx_reserves")))],
+        "chart_sub": "Real GDP growth (quarterly, YoY) and CPI inflation (monthly, YoY)",
+        "chart": (get("in_gdp_growth"), "Real GDP growth (YoY)", get("in_cpi_inflation"), "CPI inflation (YoY)",
+                  "Source: MoSPI. CPI 2024 base from Jan 2026; GDP 2022-23 base."),
+        "pulse": [pulse_row("drop", "Banking liquidity", "Net LAF, RBI", "in_net_liquidity",
+                            status=("good", "Surplus") if liq is not None and liq < 0 else ("watch", "Deficit")),
+                  pulse_row("shield", "Forex reserves", "US$, weekly", "in_fx_reserves", how="pct", good="up",
+                            status=change_status(get("in_fx_reserves"), 28, ("good", "Rising"), ("watch", "Falling"))),
+                  pulse_row("ship", "Trade balance", "Goods + services", "in_total_trade_balance", good="up",
+                            status=change_status(get("in_total_trade_balance"), 0, ("good", "Narrowing"), ("watch", "Widening"))),
+                  pulse_row("credit", "Bank credit growth", "YoY", "in_bank_credit_yoy", how="pp", good="up",
+                            status=level_status(credit, [(12, "good", "Strong"), (8, "watch", "Moderate")], ("bad", "Weak"))),
+                  pulse_row("scale", "Current account", "Monthly BoP", "in_current_account", good="up",
+                            status=("good", "Surplus") if (last("in_current_account") or -1) >= 0 else
+                            change_status(get("in_current_account"), 0, ("good", "Improving"), ("watch", "Deteriorating"))),
+                  pulse_row("flow", "FDI into India, net", "Monthly BoP", "in_fdi_india_net", good="up",
+                            status=("good", "Inflow") if (last("in_fdi_india_net") or 0) > 0 else ("bad", "Outflow"))],
+        "table": [("GDP (real growth, YoY)", "in_gdp_growth", None, None, "Quarterly"),
+                  ("CPI inflation (YoY)", "in_cpi_inflation", None, None, "Monthly"),
+                  ("Food inflation (YoY)", "in_food_inflation", None, None, "Monthly"),
+                  ("Unemployment rate (PLFS)", "in_unemployment", None, None, "Monthly"),
+                  ("Policy repo rate", "in_repo_rate", None, None, "As announced"),
+                  ("10Y G-sec yield", "in_10y", None, None, "Daily"),
+                  ("Rupee per US$", "inr_usd", None, None, "Daily"),
+                  ("Forex reserves", "in_fx_reserves", None, None, "Weekly"),
+                  ("Trade balance (goods + services)", "in_total_trade_balance", None, None, "Monthly"),
+                  ("Current account balance", "in_current_account", None, None, "Monthly"),
+                  ("Fiscal deficit, % of GDP (latest RE/BE)", "in_fiscal_deficit_gdp_est", None, None, "Annual"),
+                  ("Public debt, % of GDP (IMF)", "in_gov_debt_gdp", None, None, "Annual")],
+        "note": " " + "; ".join(p for p in parts if p) + ".",
+    }
+
+
+def spec_us():
+    cpi, core = yoy("us_cpi"), yoy("us_core_pce")
+    stance = sg.policy_stance(get("us_policy_rate"), "Fed")
+    slope = diff("us_10y", "us_2y")
+    parts = [stance.text, not cpi.empty and f"CPI inflation {_first(cpi):.1f}% is {sg.inflation_target(_first(cpi)).text}",
+             has("us_unemployment") and f"unemployment {last('us_unemployment'):.1f}%"]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, q/q annualised", "us_gdp_growth", good="up",
+                     signal=sg.growth(last("us_gdp_growth"), 2, 0)),
+                 kpi("infl", "Inflation", "CPI, YoY (derived)", "us_cpi", df=cpi, unit="percent", good="down",
+                     signal=sg.inflation_target(_first(cpi))),
+                 kpi("jobs", "Unemployment", "BLS, seasonally adjusted", "us_unemployment", good="down",
+                     signal=sg.trend_lower_is_better(get("us_unemployment"), 180, "unemployment")),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "us_gov_debt_gdp", good="down")],
+        "kpis2": [kpi("bank", "Fed funds rate", "Target, upper bound", "us_policy_rate", how="bp", signal=stance),
+                  kpi("fx", "Dollar index", "Broad, Federal Reserve", "us_dollar_broad", how="pct"),
+                  kpi("yield", "10Y Treasury", "Constant maturity", "us_10y", how="bp", signal=sg.yield_move(get("us_10y"))),
+                  kpi("infl", "Core PCE", "YoY (derived), Fed target 2%", "us_core_pce", df=core, unit="percent", good="down",
+                      signal=sg.inflation_target(_first(core)))],
+        "chart_sub": "Real GDP growth (q/q annualised) and CPI inflation (YoY, derived)",
+        "chart": (get("us_gdp_growth"), "Real GDP growth (q/q SAAR)", cpi, "CPI inflation (YoY)", "Source: FRED (BEA, BLS)."),
+        "pulse": [pulse_row("bank", "Fed balance sheet", "Total assets, weekly", "us_fed_balance_sheet", how="pct",
+                            status=change_status(get("us_fed_balance_sheet"), 28, ("neutral", "Expanding"), ("neutral", "Shrinking"))),
+                  pulse_row("drop", "Bank reserves", "At the Fed, weekly", "us_bank_reserves", how="pct", good="up"),
+                  pulse_row("flow", "Overnight reverse repo", "Fed ON RRP", "us_reverse_repo"),
+                  pulse_row("yield", "Yield curve, 10Y − 2Y", "Derived", "us_10y", df=slope, unit="pp_spread", how="bp",
+                            status=("good", "Positive") if (_first(slope) or 0) >= 0 else ("watch", "Inverted")),
+                  pulse_row("credit", "M2 money stock", "Monthly", "us_m2", how="pct")],
+        "table": [("GDP (real, q/q SAAR)", "us_gdp_growth", None, None, "Quarterly"),
+                  ("CPI inflation (YoY, derived)", "us_cpi", cpi, "percent", "Monthly"),
+                  ("Core PCE inflation (YoY, derived)", "us_core_pce", core, "percent", "Monthly"),
+                  ("Unemployment rate", "us_unemployment", None, None, "Monthly"),
+                  ("Fed funds target (upper)", "us_policy_rate", None, None, "As announced"),
+                  ("10Y Treasury yield", "us_10y", None, None, "Daily"),
+                  ("Public debt, % of GDP (IMF)", "us_gov_debt_gdp", None, None, "Annual"),
+                  ("Federal debt, % of GDP", "us_federal_debt_gdp", None, None, "Quarterly")],
+        "note": " " + "; ".join(p for p in parts if p) + ".",
+    }
+
+
+def spec_ea():
+    hicp, gdp = yoy("ea_hicp"), yoy("ea_gdp_real", 4)
+    stance = sg.policy_stance(get("ea_ecb_deposit_rate"), "ECB")
+    parts = [stance.text, not hicp.empty and f"HICP inflation {_first(hicp):.1f}% is {sg.inflation_target(_first(hicp)).text}",
+             not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY"]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", "ea_gdp_real", df=gdp, unit="percent", good="up",
+                     signal=sg.growth(_first(gdp), 1.5, 0)),
+                 kpi("infl", "Inflation", "HICP, YoY (derived)", "ea_hicp", df=hicp, unit="percent", good="down",
+                     signal=sg.inflation_target(_first(hicp))),
+                 kpi("bank", "ECB deposit rate", "Main policy signal", "ea_ecb_deposit_rate", how="bp", signal=stance),
+                 kpi("yield", "Germany 10Y", "Bund, monthly average", "de_10y", how="bp")],
+        "kpis2": [kpi("fx", "EUR/USD", "US$ per euro", "usd_eur", how="pct", good="up")],
+        "chart_sub": "Real GDP growth and HICP inflation (YoY, derived)",
+        "chart": (gdp, "Real GDP growth (YoY)", hicp, "HICP inflation (YoY)", "Source: FRED (Eurostat, ECB)."),
+        "pulse": [pulse_row("fx", "EUR/USD", "Daily", "usd_eur", how="pct",
+                            status=change_status(get("usd_eur"), 30, ("good", "Euro firmer"), ("watch", "Euro weaker"))),
+                  pulse_row("yield", "Germany 10Y", "Monthly average", "de_10y", how="bp"),
+                  pulse_row("bank", "ECB refi rate", "Main refinancing", "ea_ecb_mro_rate", how="bp")],
+        "table": [("Real GDP growth (YoY, derived)", "ea_gdp_real", gdp, "percent", "Quarterly"),
+                  ("HICP inflation (YoY, derived)", "ea_hicp", hicp, "percent", "Monthly"),
+                  ("ECB deposit rate", "ea_ecb_deposit_rate", None, None, "As announced"),
+                  ("Germany 10Y yield", "de_10y", None, None, "Monthly"),
+                  ("EUR/USD", "usd_eur", None, None, "Daily")],
+        "note": " " + "; ".join(p for p in parts if p) + ". Euro area unemployment and debt are not shown: no current "
+                "official series we can fetch automatically.",
+    }
+
+
+def spec_cn():
+    g = last("cn_gdp_growth")
+    parts = [g is not None and f"real GDP growth {g:.1f}% (IMF, annual)",
+             has("cn_inflation") and f"CPI inflation {last('cn_inflation'):.1f}% (IMF, annual)"]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, annual (IMF)", "cn_gdp_growth", good="up", signal=sg.growth(g, 5, 3)),
+                 kpi("infl", "Inflation", "CPI, annual average (IMF)", "cn_inflation"),
+                 kpi("jobs", "Unemployment", "ILO modelled", "cn_unemployment_ilo", good="down"),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "cn_gov_debt_gdp", good="down")],
+        "kpis2": [kpi("fx", "Yuan", "CNY per US$", "cny_usd", how="pct", good="down",
+                      signal=sg.local_currency(get("cny_usd"), "yuan", 30))],
+        "chart_sub": "Real GDP growth and CPI inflation (annual, IMF)",
+        "chart": (get("cn_gdp_growth"), "Real GDP growth", get("cn_inflation"), "CPI inflation", "Source: IMF World Economic Outlook."),
+        "pulse": [pulse_row("fx", "CNY per US$", "Daily", "cny_usd", how="pct",
+                            status=change_status(get("cny_usd"), 30, ("watch", "Yuan weaker"), ("good", "Yuan firmer"))),
+                  pulse_row("gdp", "IMF growth projection", "Next year", "cn_gdp_growth_imf_proj",
+                            df=get("cn_gdp_growth_imf_proj").head(1)),
+                  pulse_row("scale", "Fiscal balance", "% of GDP (IMF)", "cn_gov_balance_gdp", unit="percent_of_gdp")],
+        "table": [("Real GDP growth (IMF)", "cn_gdp_growth", None, None, "Annual"),
+                  ("CPI inflation (IMF)", "cn_inflation", None, None, "Annual"),
+                  ("Unemployment (ILO)", "cn_unemployment_ilo", None, None, "Annual"),
+                  ("Public debt, % of GDP (IMF)", "cn_gov_debt_gdp", None, None, "Annual"),
+                  ("CNY per US$", "cny_usd", None, None, "Daily")],
+        "note": " " + "; ".join(p for p in parts if p) + ". China monthly CPI is not shown: no current official series "
+                "we can fetch automatically.",
+    }
+
+
+def spec_jp():
+    gdp = yoy("jp_gdp_real", 4)
+    parts = [not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY",
+             has("jp_10y") and f"10Y JGB {last('jp_10y'):.2f}%",
+             has("usd_jpy") and f"¥{last('usd_jpy'):.2f} per US$"]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", "jp_gdp_real", df=gdp, unit="percent", good="up",
+                     signal=sg.growth(_first(gdp), 1, 0)),
+                 kpi("infl", "Inflation", "CPI, annual (IMF)", "jp_inflation", signal=sg.inflation_target(last("jp_inflation"))),
+                 kpi("jobs", "Unemployment", "Ages 15-64", "jp_unemployment", good="down",
+                     signal=sg.trend_lower_is_better(get("jp_unemployment"), 180, "unemployment")),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "jp_gov_debt_gdp", good="down")],
+        "kpis2": [kpi("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp"),
+                  kpi("fx", "Yen", "¥ per US$", "usd_jpy", how="pct", good="down",
+                      signal=sg.local_currency(get("usd_jpy"), "yen", 30))],
+        "chart_sub": "Real GDP growth (YoY, derived) and CPI inflation (annual, IMF)",
+        "chart": (gdp, "Real GDP growth (YoY)", get("jp_inflation"), "CPI inflation (annual)", "Source: FRED, IMF."),
+        "pulse": [pulse_row("fx", "USD/JPY", "Daily", "usd_jpy", how="pct",
+                            status=change_status(get("usd_jpy"), 30, ("watch", "Yen weaker"), ("good", "Yen firmer"))),
+                  pulse_row("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp"),
+                  pulse_row("drop", "3-month interbank rate", "Monthly", "jp_3m", how="bp")],
+        "table": [("Real GDP growth (YoY, derived)", "jp_gdp_real", gdp, "percent", "Quarterly"),
+                  ("CPI inflation (IMF)", "jp_inflation", None, None, "Annual"),
+                  ("Unemployment rate", "jp_unemployment", None, None, "Monthly"),
+                  ("10Y JGB yield", "jp_10y", None, None, "Monthly"),
+                  ("Yen per US$", "usd_jpy", None, None, "Daily"),
+                  ("Public debt, % of GDP (IMF)", "jp_gov_debt_gdp", None, None, "Annual")],
+        "note": " " + "; ".join(p for p in parts if p) + ". The Bank of Japan policy rate is not shown: no current "
+                "official series we can fetch automatically.",
+    }
+
+
+COUNTRY_SPECS = {"India": spec_india, "United States": spec_us, "Euro area": spec_ea, "China": spec_cn, "Japan": spec_jp}
+VIEWS = {"India": india, "United States": united_states, "Euro area": euro_area, "China": china, "Japan": japan}
+
+
+def countries_page():
+    st.markdown(f'<div class="ov-h"><h1>Countries</h1></div><div class="ov-sub">Snapshot of every country we track. '
+                'Open one for its full overview.</div>', unsafe_allow_html=True)
+    for c in COUNTRY_LIST:
+        spec = COUNTRY_SPECS[c]()
+        with st.container(border=True):
+            a, b = st.columns([5, 1])
+            a.markdown(f'<div class="ov-h" style="margin:0"><img src="https://flagcdn.com/w80/{FLAGS[c]}.png" alt="">'
+                       f'<h1 style="font-size:1.3rem">{c}</h1></div>', unsafe_allow_html=True)
+            b.button("Open overview", key=f"open_{c}", width="stretch", on_click=go_to,
+                     args=("Overview",), kwargs={"country_pick": c})
+            kpi_row(spec["kpis"])
+
+
+def compare_page():
+    st.markdown(f'<div class="ov-h"><h1>Compare</h1></div><div class="ov-sub">Same indicators side by side.</div>',
+                unsafe_allow_html=True)
+    sel = st.multiselect("Countries", COUNTRY_LIST, key="compare_set")
+    codes = {{"India": "IN", "United States": "US", "Euro area": "EA", "China": "CN", "Japan": "JP"}[c] for c in sel}
+    compare(codes)
+
+
+def data_sources_page():
+    st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, Union Budget, CGA, Ministry of Commerce, "
-                "FRED, IMF and the World Bank, fetched automatically every morning. FBIL market data (bond yields, "
-                "T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come from the "
-                "RBI home page. Derived values (YoY %, spreads, shares, real rate) are computed by MacroLens and labelled.")
+                "FRED, IMF and the World Bank, fetched automatically every morning at about 07:00 IST. FBIL market data "
+                "(bond yields, T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come "
+                "from the RBI home page. Derived values (YoY %, spreads, shares, real rate) are computed by MacroLens and "
+                "labelled. IMF projections and budget estimates are kept as separate, labelled series.")
     q = quality(stamp)
     st.markdown(f"**Quality checks:** {int((q['severity'] == 'error').sum())} errors, {int((q['severity'] == 'warn').sum())} "
                 "warnings (a warning usually marks a real market event).")
     if not q.empty:
-        st.dataframe(q, use_container_width=True, hide_index=True)
+        st.dataframe(q, width="stretch", hide_index=True)
     table = summary[["indicator_id", "name", "topic", "country", "value", "unit", "date", "frequency", "source",
                      "source_url", "fetched_at"]]
-    st.dataframe(table, use_container_width=True, hide_index=True,
+    st.dataframe(table, width="stretch", hide_index=True,
                  column_config={"source_url": st.column_config.LinkColumn("source link")})
     pick = st.selectbox("Download one series", summary["indicator_id"], format_func=lambda i: f"{i} — {ROWS.loc[i, 'name']}")
     st.download_button("Download CSV", get(pick).to_csv(index=False).encode("utf-8"), file_name=f"{pick}.csv", mime="text/csv")
+
+
+if page == "Overview":
+    overview(country)
+elif page == "Countries":
+    countries_page()
+elif page == "Indicators":
+    st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[country]}.png" alt=""><h1>{country} | '
+                f'Indicators</h1></div><div class="ov-sub">Every series we track for {country}, by topic.</div>',
+                unsafe_allow_html=True)
+    VIEWS[country]()
+elif page == "Compare":
+    compare_page()
+else:
+    data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
