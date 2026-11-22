@@ -57,10 +57,23 @@ def _data_uri(svg_text: str) -> str:
 # land outlines and served by Streamlit's static file serving ([server] enableStaticServing in .streamlit/config.toml).
 GLOBE_URL = "./app/static/globe.webp"
 
+# Sidebar bottom wave, redrawn as vector from the owner's reference: two translucent hills rising to the
+# right with a thin bright ridge line, fading into the navy at the bottom.
+_BACK = "M0 470 C200 430 380 360 520 230 S700 62 860 40"
+_FRONT = "M0 395 C80 340 140 290 200 292 S290 305 340 285 C430 240 500 110 560 108 C610 106 640 130 700 150 S820 175 860 178"
 WAVE_URI = _data_uri(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" preserveAspectRatio="none">'
-    '<path d="M0 110 C60 70 110 140 170 100 S260 40 300 60 V160 H0Z" fill="#3B82F6" fill-opacity=".18"/>'
-    '<path d="M0 135 C70 100 120 150 190 125 S270 90 300 100 V160 H0Z" fill="#60A5FA" fill-opacity=".14"/></svg>')
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 535"><defs>'
+    '<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A63C4" stop-opacity=".55"/>'
+    '<stop offset="1" stop-color="#062A5A" stop-opacity=".25"/></linearGradient>'
+    '<linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#1F6FD6" stop-opacity=".7"/>'
+    '<stop offset="1" stop-color="#0B3D7E" stop-opacity=".12"/></linearGradient>'
+    '<linearGradient id="v" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#011B3B" stop-opacity="0"/>'
+    '<stop offset="1" stop-color="#011B3B" stop-opacity=".75"/></linearGradient></defs>'
+    f'<path d="{_BACK} L860 535 L0 535Z" fill="url(#b)"/>'
+    f'<path d="{_FRONT} L860 535 L0 535Z" fill="url(#f)"/>'
+    f'<path d="{_BACK}" fill="none" stroke="#93C5FD" stroke-opacity=".32" stroke-width="2"/>'
+    f'<path d="{_FRONT}" fill="none" stroke="#93C5FD" stroke-opacity=".5" stroke-width="2"/>'
+    '<rect width="860" height="535" fill="url(#v)"/></svg>')
 # Executive Summary card background: the owner's image, trimmed and faded by tools/make_exec_bg.py
 EXEC_BG_URL = "./app/static/exec_bg.webp"
 
@@ -85,7 +98,7 @@ header[data-testid="stHeader"]{{background:transparent}}
   linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}
 @media (max-width:900px){{[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -90px top -50px / 300px,
   linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}}}
-section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat bottom / 100% 190px,
+section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat center bottom / 100% auto,
   radial-gradient(120% 40% at 0% 0%,rgba(14,58,120,.55),rgba(14,58,120,0) 70%),
   linear-gradient(180deg,#03244A 0%,#011E3F 45%,#011B3B 80%,#02224A 100%);border-right:none}}
 section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button,
