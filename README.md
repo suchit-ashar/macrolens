@@ -1,8 +1,6 @@
 # MacroLens
 
-A macro dashboard for investors, businesses and FDI decision-makers. It tracks official
-data for India and the US (rates, currency, bonds, liquidity, inflation, growth, external
-sector, fiscal) and updates automatically every day.
+Your morning market briefing, plus live macro data for India and the world's major economies.
 
 **Live dashboard: https://macromonitor.streamlit.app/** (Streamlit Community Cloud; refreshes
 after each daily data commit).
