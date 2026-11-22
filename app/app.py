@@ -286,9 +286,20 @@ def diff(a: str, b: str) -> pd.DataFrame:
 MONEY_UNITS = {"inr_crore", "usd_million", "usd", "eur_million", "jpy_billion", "usd_billion"}
 
 
+def inr_group(n: float) -> str:
+    """Indian digit grouping: 123893 -> '1,23,893'."""
+    s = f"{abs(n):.0f}"
+    head, tail = s[:-3], s[-3:]
+    while len(head) > 2:
+        tail, head = head[-2:] + "," + tail, head[:-2]
+    return ("-" if n < 0 else "") + (head + "," + tail if head else tail)
+
+
 def fmt_value(v, unit):
     if v is None or pd.isna(v):
         return "–"
+    if unit == "inr_per_10g":
+        return f"₹{inr_group(v)}"
     if unit in MONEY_UNITS and v < 0:
         return "−" + fmt_value(-v, unit)
     if unit == "inr_crore":
@@ -933,6 +944,7 @@ ICON = {
     "help": '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.9v.5M12 16.8v.2"/>',
     "doc": '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 11h6M9 14.5h6M9 18h4"/>',
     "story": '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/>',
+    "gold": '<path d="M2.5 20.5l2-5h7l2 5zM10.5 20.5l2-5h7l2 5zM6.5 15.5l2-5h7l2 5z"/>',
 }
 LEVEL_COLOR = {"good": "#15803D", "watch": "#B45309", "bad": "#B91C1C", "neutral": NAVY}
 
@@ -1452,7 +1464,7 @@ def briefing_page():
              kpi("drop", "Brent crude", "US$ per barrel, spot (FRED)", "brent", how="pct"),
              kpi("fx", "Rupee", "₹ per US$ (FBIL reference)", "inr_usd", how="pct", good="down",
                  signal=sg.local_currency(get("inr_usd"))),
-             kpi("globe", "US dollar index", "Broad, Federal Reserve", "us_dollar_broad", how="pct")])
+             kpi("gold", "Gold (24K)", "₹ per 10 g, IBJA closing rate", "in_gold", how="pct")])
     st.markdown('<div class="bsnap">Snapshot: latest official data in MacroLens (dates on each card). '
                 'The briefing below is written separately by AI.</div>', unsafe_allow_html=True)
 

@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
-from ingest import budget, fbil, fred, imf, mospi, rbi, rbi_releases, trade, worldbank
+from ingest import budget, fbil, fred, ibja, imf, mospi, rbi, rbi_releases, trade, worldbank
 from ingest.registry import load_registry
 from transform.checks import run_checks, to_records
 from transform.normalize import latest_vintage, merge_vintages, to_long
@@ -35,6 +35,7 @@ FETCHERS = {
     "Union Budget": budget.fetch,
     "CGA": budget.fetch,
     "RBIRelease": rbi_releases.fetch,
+    "IBJA": ibja.fetch,
 }
 
 

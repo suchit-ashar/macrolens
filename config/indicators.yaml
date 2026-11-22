@@ -792,6 +792,17 @@
   frequency: daily
   source_url: https://fred.stlouisfed.org/series/DCOILBRENTEU
 
+- id: in_gold
+  country: IN
+  topic: commodities
+  name: Gold 999 (24K), IBJA closing rate, ₹ per 10 g
+  source: IBJA
+  source_series: "pm:Gold 999"
+  unit: inr_per_10g
+  frequency: daily
+  note: India Bullion and Jewellers Association PM (closing) rate, used by RBI to price Sovereign Gold Bonds. No rates on weekends and central-government holidays.
+  source_url: https://ibjarates.com/
+
 # ============================== EXTERNAL ==============================
 # World Bank annual series (1 January of the year). Higher-frequency RBI data (weekly forex
 # reserves, quarterly BoP) to be added once the sources are confirmed.
