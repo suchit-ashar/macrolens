@@ -160,6 +160,53 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
 .st-key-bexec strong{{color:#FFFFFF !important}}
 .st-key-bexec p,.st-key-bexec li{{font-size:.95rem;line-height:1.6}}
 .st-key-bexec a{{color:#93C5FD !important}}
+.bcard{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem;
+  box-shadow:0 1px 2px rgba(15,23,42,.03),0 6px 18px rgba(15,23,42,.04)}}
+.bcard .bh small{{color:{MUTED};font-weight:500;font-size:.8rem;margin-left:.2rem}}
+.bflag{{width:28px;height:19px;border-radius:3px;border:1px solid {LINE};flex:none}}
+.bt{{width:100%;border-collapse:collapse;font-size:.83rem}}
+.bt th{{text-align:left;color:{MUTED};font-size:.7rem;font-weight:600;background:#F8FAFC;padding:.4rem .35rem}}
+.bt td{{padding:.42rem .35rem;border-bottom:1px solid #F1F5F9;color:{NAVY};font-variant-numeric:tabular-nums;white-space:nowrap}}
+.bt td:first-child{{font-weight:600}} .bt .r{{text-align:right}}
+.bcard:has(.bt){{padding:.95rem .9rem}}
+.chg{{display:inline-block;min-width:3.9rem;text-align:right;border-radius:6px;padding:1px 6px;font-weight:600}}
+.chg.up{{background:#DCFCE7;color:#15803D}} .chg.down{{background:#FEE2E2;color:#B91C1C}} .chg.na{{color:{MUTED}}}
+.bnote{{color:{MUTED};font-size:.72rem;margin-top:.5rem;line-height:1.4}}
+.bnote a,.tk-t a,.drv a{{color:{MUTED}}}
+.chips{{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;min-height:2.5rem;padding-left:1rem;
+  border-left:1px solid {LINE}}}
+.chips .lbl{{display:flex;align-items:center;gap:.35rem;font-weight:700;color:{NAVY};font-size:.92rem;margin-right:.2rem}}
+.chips .lbl svg{{width:22px;height:22px;stroke:{NAVY}}}
+.chip{{background:#E8F0FE;color:#1E3A8A;border-radius:999px;padding:.3rem .8rem;font-size:.82rem;font-weight:600}}
+.tk{{display:grid;grid-template-columns:28px minmax(110px,auto) minmax(0,1fr);gap:.75rem;align-items:center;
+  padding:.55rem 0;border-bottom:1px solid #F1F5F9}}
+.tk:last-child{{border-bottom:none}}
+.tk-n{{width:28px;height:28px;border-radius:50%;background:#E8F0FE;color:#1E40AF;font-weight:700;display:flex;
+  align-items:center;justify-content:center;font-size:.85rem}}
+.tk-l{{background:#E8F0FE;color:{NAVY};font-weight:700;border-radius:8px;padding:.32rem .65rem;font-size:.85rem}}
+.tk-t{{color:#334155;font-size:.88rem;line-height:1.45}}
+.drv{{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));row-gap:.8rem}}
+.drv > div{{padding:.2rem .9rem;border-left:1px solid #EEF1F5}}
+.drv > div:first-child{{border-left:none;padding-left:.2rem}}
+.drv svg{{width:28px;height:28px;stroke:{NAVY};margin-bottom:.4rem;display:block}}
+.drv b{{display:block;color:{NAVY};font-size:.93rem;margin-bottom:.15rem}}
+.drv span{{color:#475569;font-size:.8rem;line-height:1.45}}
+.st-key-bexec ul{{padding-left:1.1rem}}
+.st-key-bexec li{{font-size:1rem !important;margin-bottom:.35rem}}
+.st-key-bexec li::marker{{color:#60A5FA}}
+.st-key-bexec [data-testid="stExpander"] details{{background:rgba(255,255,255,.06) !important;border:1px solid rgba(255,255,255,.2) !important}}
+.st-key-bexec [data-testid="stExpander"] summary,.st-key-bexec [data-testid="stExpander"] summary:hover,
+.st-key-bexec [data-testid="stExpander"] details[open] > summary{{background:transparent !important}}
+.st-key-bexec [data-testid="stExpander"] summary *{{color:#FFFFFF !important;fill:#FFFFFF !important}}
+.st-key-bexec [data-testid="stExpander"] summary p{{font-weight:600}}
+.st-key-bexec [data-testid="stExpanderDetails"]{{background:transparent !important}}
+.bcard{{container-type:inline-size}}
+.mkt-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:1rem}}
+.mkt-grid .bcard{{margin-bottom:0}}
+.mkt-grid + *{{margin-top:1rem}}
+@container (max-width:290px){{.bt{{font-size:.76rem}} .bt td,.bt th{{padding-left:.22rem;padding-right:.22rem}}
+  .chg{{min-width:0;padding:1px 4px}} .bcard .bh{{font-size:1.05rem}}}}
+@container (max-width:225px){{.bt td:first-child{{white-space:normal}}}}
 .bmeta{{display:flex;align-items:center;gap:.5rem;color:{NAVY};font-size:.9rem;background:#FFFFFF;border:1px solid {LINE};
   border-radius:10px;padding:.55rem .8rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}}
 .bmeta svg{{width:20px;height:20px;stroke:{BLUE};flex:none}}
@@ -960,6 +1007,8 @@ ICON = {
     "doc": '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 11h6M9 14.5h6M9 18h4"/>',
     "story": '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/>',
     "gold": '<path d="M2.5 20.5l2-5h7l2 5zM10.5 20.5l2-5h7l2 5zM6.5 15.5l2-5h7l2 5z"/>',
+    "pct": '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+    "layers": '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 17l9 5 9-5"/>',
 }
 LEVEL_COLOR = {"good": "#15803D", "watch": "#B45309", "bad": "#B91C1C", "neutral": NAVY}
 
@@ -1452,6 +1501,37 @@ def bsection(key: str, title: str, body: str, icon: str | None = None, border: b
         st.markdown(body or "_Not included in this briefing._")
 
 
+# Boxes built from the briefing's fixed sections. All briefing text goes through bf.md_inline (HTML-escaped).
+def chg_pill(v: str) -> str:
+    s = v.strip()
+    kind = "up" if s.startswith("+") else "down" if s.startswith(("-", "−")) else "na"
+    return f'<span class="chg {kind}">{bf.md_inline(s)}</span>'
+
+
+def market_table(title: str, icon_html: str, sub: str, rows: list[list[str]], note: str) -> str:
+    body = "".join(f'<tr><td>{bf.md_inline(r[0])}</td><td class="r">{bf.md_inline(r[1] if len(r) > 1 else "")}</td>'
+                   f'<td class="r">{chg_pill(r[2] if len(r) > 2 else "N/A")}</td></tr>' for r in rows if r and r[0])
+    sub_html = f' <small>{sub}</small>' if sub else ""
+    return (f'<div class="bcard"><div class="bh">{icon_html}{title}{sub_html}</div>'
+            f'<table class="bt"><tr><th>Index</th><th class="r">Close</th><th class="r">Change</th></tr>{body}</table>'
+            + (f'<div class="bnote">{bf.md_inline(note)}</div>' if note else "") + '</div>')
+
+
+def takeaways_html(rows: list[tuple[str, str]]) -> str:
+    items = "".join(f'<div class="tk"><span class="tk-n">{i}</span><span class="tk-l">{bf.md_inline(lab) or "&nbsp;"}</span>'
+                    f'<span class="tk-t">{bf.md_inline(txt)}</span></div>' for i, (lab, txt) in enumerate(rows, 1))
+    return f'<div class="bcard"><div class="bh">{svg("target")}Key Takeaways</div>{items}</div>'
+
+
+DRIVER_ICON = {"rates": "pct", "earnings": "gdp", "geopolitics": "globe", "flows": "layers"}
+
+
+def drivers_html(rows: list[tuple[str, str]]) -> str:
+    items = "".join(f'<div>{svg(DRIVER_ICON.get(lab.lower(), "doc"))}<b>{bf.md_inline(lab)}</b>'
+                    f'<span>{bf.md_inline(txt)}</span></div>' for lab, txt in rows)
+    return f'<div class="bcard"><div class="bh">{svg("yield")}Market Drivers — Why it Moved</div><div class="drv">{items}</div></div>'
+
+
 def briefing_page():
     st.markdown('<div class="ov-h"><h1>Daily Market <span>Briefing</span></h1></div>'
                 '<div class="ov-sub">Global and Indian markets, every morning before the Indian open.</div>',
@@ -1470,8 +1550,17 @@ def briefing_page():
         st.warning("This briefing could not be loaded right now. Try again in a minute.")
         return
     b = bf.split_briefing(text)
-    if b.cutoff:  # the file says "Data cut-off: ..."; the page shows it as "As of ..."
-        c2.caption(re.sub(r"data cut-?off(\s+timestamp)?\s*:?", "As of", b.cutoff, flags=re.IGNORECASE))
+    as_of = re.sub(r"data cut-?off(\s+timestamp)?\s*:?", "As of", b.cutoff, flags=re.IGNORECASE) if b.cutoff else ""
+    focus = b.take("today's focus")
+    tags = bf.bullets(focus[1]) if focus else []
+    if tags:
+        c2.markdown(f'<div class="chips"><span class="lbl">{svg("target")}Today\'s Focus:</span>'
+                    + "".join(f'<span class="chip">{bf.md_inline(t)}</span>' for t in tags[:6]) + '</div>',
+                    unsafe_allow_html=True)
+        if as_of:
+            st.caption(as_of)
+    elif as_of:  # the file says "Data cut-off: ..."; the page shows it as "As of ..."
+        c2.caption(as_of)
 
     # Market snapshot from MacroLens's own feeds (not from the AI text), so the headline numbers are verified data.
     kpi_row([kpi("yield", "US 10Y Treasury", "Yield, constant maturity (FRED)", "us_10y", how="bp",
@@ -1488,12 +1577,61 @@ def briefing_page():
         with st.container(border=True, key="brief"):
             st.markdown(text)
         return
+
+    # The Global Equities / Indian Markets tables go to the top boxes; the rest of each section stays below.
+    tables = {}
+    for i, (h, body) in enumerate(b.sections):
+        n = bf.norm(h)
+        if n.startswith(("global equities", "indian markets")):
+            rows, note, rest = bf.lead_table(body)
+            if rows:
+                tables["global" if n.startswith("global") else "india"] = (rows, note)
+                b.sections[i] = (h, rest)
+    lead, detail = bf.lead_bullets(execsum[1])
     events = b.take("what to watch", "today's key events", "key events")
-    left, right = st.columns([1.35, 1], gap="medium")
-    with left:
-        bsection("bexec", "Executive Summary", execsum[1], "doc", border=False)
-    with right:
-        bsection("bsec_events", "Today's key events", events[1] if events else "", "calendar")
+
+    cols = st.columns([1.2, 1.4] if len(tables) == 2 else [1.35, 1], gap="medium")
+    with cols[0]:
+        with st.container(key="bexec"):
+            st.markdown(f'<div class="bh">{svg("doc")}Executive Summary</div>', unsafe_allow_html=True)
+            if lead:
+                st.markdown("\n".join(f"- {x}" for x in lead))
+                if detail:
+                    with st.expander("Read the full summary"):
+                        st.markdown(detail)
+            else:
+                st.markdown(execsum[1])
+    if tables:
+        flag = '<img class="bflag" src="https://flagcdn.com/w40/in.png" alt="">'
+        boxes = [("global", "Global Equities", svg("gdp"), ""), ("india", "Indian Markets", flag, "")]
+        # one grid: the two tables sit side by side when there is room and stack when there is not
+        cols[1].markdown('<div class="mkt-grid">' + "".join(market_table(title, icon, sub, *tables[k])
+                                                            for k, title, icon, sub in boxes if k in tables) + '</div>',
+                         unsafe_allow_html=True)
+    else:
+        with cols[1]:
+            bsection("bsec_events", "Today's key events", events[1] if events else "", "calendar")
+            events = None
+
+    tk, drv = b.take("key takeaways"), b.take("market drivers")
+    tk_rows = bf.labelled(tk[1], numbered=True) if tk else []
+    drv_rows = bf.labelled(drv[1]) if drv else []
+    if tk_rows or drv_rows:
+        l2, r2 = st.columns([1.15, 1], gap="medium")
+        if tk_rows:
+            l2.markdown(takeaways_html(tk_rows), unsafe_allow_html=True)
+        if drv_rows:
+            (r2 if tk_rows else l2).markdown(drivers_html(drv_rows), unsafe_allow_html=True)
+
+    link = b.take("india ↔ global", "india <-> global", "india-global", "india – global")
+    if events or link:
+        l3, r3 = st.columns([1.35, 1], gap="medium")
+        if link:
+            with l3:
+                bsection("bsec_link", link[0], link[1])
+        if events:
+            with (r3 if link else l3):
+                bsection("bsec_events", "Today's key events", events[1], "calendar")
 
     takeaways = [s for s in (b.take("3 things"), b.take("2 risks", "risks"), b.take("2 opportunities", "opportunities"))
                  if s]

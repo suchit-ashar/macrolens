@@ -57,6 +57,69 @@ def split_briefing(text: str) -> Briefing:
     return b
 
 
+_BULLET = re.compile(r"^\s*[-*+]\s+(.+?)\s*$")
+_NUMBERED = re.compile(r"^\s*\d+[.)]\s+(.+?)\s*$")
+_LABELLED = re.compile(r"^\*\*(.+?)\*\*\s*[:—–-]?\s*[:—–-]?\s*(.*)$")
+
+
+def bullets(body: str) -> list[str]:
+    """Text of every '- item' line, in order."""
+    return [m.group(1) for line in body.splitlines() if (m := _BULLET.match(line))]
+
+
+def lead_bullets(body: str) -> tuple[list[str], str]:
+    """Bullet lines at the very start of a section, and the rest of the section."""
+    lines, out, i = body.splitlines(), [], 0
+    while i < len(lines) and (not lines[i].strip() and not out or _BULLET.match(lines[i])):
+        if lines[i].strip():
+            out.append(_BULLET.match(lines[i]).group(1))
+        i += 1
+    return out, "\n".join(lines[i:]).strip()
+
+
+def labelled(body: str, numbered: bool = False) -> list[tuple[str, str]]:
+    """'1. **Label** — text' (numbered) or '- **Label:** text' lines as (label, text)."""
+    pat, rows = (_NUMBERED if numbered else _BULLET), []
+    for line in body.splitlines():
+        m = pat.match(line)
+        if not m:
+            continue
+        lm = _LABELLED.match(m.group(1))
+        label, text = (lm.group(1).rstrip(":").strip(), lm.group(2).strip()) if lm else ("", m.group(1))
+        rows.append((label, text))
+    return rows
+
+
+def lead_table(body: str) -> tuple[list[list[str]], str, str]:
+    """The Markdown table at the start of a section: (data rows, the note line right under it, the rest)."""
+    lines = body.splitlines()
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    start = i
+    while i < len(lines) and lines[i].strip().startswith("|"):
+        i += 1
+    block = lines[start:i]
+    if len(block) < 3 or not re.match(r"^\|?\s*:?-{2,}", block[1].strip()):
+        return [], "", body.strip()
+    rows = [[c.strip() for c in ln.strip().strip("|").split("|")] for ln in block[2:]]
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    note = ""  # a plain line straight after the table, e.g. "Close date: Friday, 20 November 2026. ..."
+    if i < len(lines) and not lines[i].lstrip().startswith(("#", "|", "-", "*")):
+        note, i = lines[i].strip(), i + 1
+    return rows, note, "\n".join(lines[i:]).strip()
+
+
+def md_inline(text: str) -> str:
+    """Escape text for HTML, keeping **bold**, *italic* and [links](https://...) from the Markdown."""
+    from html import escape
+    s = escape(text, quote=True)
+    s = re.sub(r"\[([^\]]+)\]\((https?://[^\s)]+)\)", r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
+    s = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", s)
+    return re.sub(r"(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])", r"<i>\1</i>", s)
+
+
 _ICONS = [
     (("linkage", "↔", "connection"), "link"), (("macro",), "globe"), (("equit",), "gdp"), (("credit",), "credit"),
     (("commodit", "fx"), "drop"), (("indian market", "india"), "bank"), (("company", "develop"), "doc"),

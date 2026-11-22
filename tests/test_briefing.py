@@ -60,6 +60,43 @@ def test_no_headings_and_curly_apostrophe():
     assert b.take("today's market narrative") is not None
 
 
+from analytics.briefing import bullets, labelled, lead_bullets, lead_table, md_inline  # noqa: E402
+
+
+def test_focus_bullets():
+    assert bullets("- AI valuation\n- US yields\n\ntext") == ["AI valuation", "US yields"]
+
+
+def test_lead_bullets_then_detail():
+    lead, rest = lead_bullets("- One.\n- Two.\n- Three.\n\n**FACT:** detail\n\n- later bullet")
+    assert lead == ["One.", "Two.", "Three."] and rest.startswith("**FACT:** detail") and "later bullet" in rest
+    assert lead_bullets("**FACT:** no bullets")[0] == []
+
+
+def test_numbered_takeaways_and_drivers():
+    body = "1. **Global Macro** — Yields fell.\n2. **Commodities** — Brent up.\n3. **India** — Banks led."
+    assert labelled(body, numbered=True) == [("Global Macro", "Yields fell."), ("Commodities", "Brent up."),
+                                             ("India", "Banks led.")]
+    drivers = "- **Rates:** 10Y fell 12 bp.\n- **Geopolitics:** Data unavailable."
+    assert labelled(drivers) == [("Rates", "10Y fell 12 bp."), ("Geopolitics", "Data unavailable.")]
+
+
+def test_lead_table_note_and_rest():
+    body = ("| Index | Close | Change |\n|---|---:|---:|\n| S&P 500 | 6,910.39 | -3.70% |\n| Nikkei 225 | N/A | N/A |\n\n"
+            "Close date: Friday, 20 November 2026.\n\n**FACT:** analysis")
+    rows, note, rest = lead_table(body)
+    assert rows == [["S&P 500", "6,910.39", "-3.70%"], ["Nikkei 225", "N/A", "N/A"]]
+    assert note.startswith("Close date") and rest == "**FACT:** analysis"
+    assert lead_table("**FACT:** no table") == ([], "", "**FACT:** no table")
+
+
+def test_md_inline_escapes_html():
+    out = md_inline('**Rates:** <script>x</script> [AP](https://apnews.com/a) [bad](javascript:alert(1))')
+    assert "<script>" not in out and "<b>Rates:</b>" in out
+    assert '<a href="https://apnews.com/a"' in out
+    assert 'href="javascript' not in out  # only http(s) links become anchors
+
+
 def test_icons():
     assert icon_for("India ↔ Global Linkages") == "link"
     assert icon_for("Indian Markets") == "bank"
