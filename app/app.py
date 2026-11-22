@@ -268,6 +268,11 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
   .drv{{grid-template-columns:repeat(2,minmax(0,1fr))}} .drv > div,.drv > div:first-child{{border-left:none;padding:.2rem .4rem}}}}
 .drv b{{overflow-wrap:normal;word-break:normal;hyphens:none}}
 .kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+.site-foot{{border-top:1px solid {LINE};margin-top:1.2rem;padding:1rem 0 .4rem;color:{MUTED};font-size:.88rem;
+  display:flex;justify-content:center;align-items:center;flex-wrap:wrap}}
+.site-foot a{{display:inline-flex;align-items:center;gap:.4rem;color:{NAVY};font-weight:600;text-decoration:none;margin-left:.25rem}}
+.site-foot a:hover{{color:#0A66C2;text-decoration:underline}}
+.site-foot svg{{width:18px;height:18px;flex:none}}
 div[class*="st-key-bsec_"] table,.st-key-bexec table,.st-key-brief table{{display:block;max-width:100%;overflow-x:auto;
   -webkit-overflow-scrolling:touch}}
 .ml-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}}
@@ -1714,3 +1719,10 @@ elif page == "Compare":
 else:
     data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
+LINKEDIN_URL = "https://www.linkedin.com/in/suchit-ashar-132207192/"
+st.markdown(
+    f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/>'
+    '<path fill="#fff" d="M6.9 9.6h2.6v8.3H6.9zM8.2 5.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM11.1 9.6h2.5v1.1h.04'
+    'c.35-.66 1.2-1.36 2.47-1.36 2.64 0 3.13 1.74 3.13 4v4.55h-2.6v-4.03c0-.96-.02-2.2-1.34-2.2-1.34 0-1.55 1.05'
+    '-1.55 2.13v4.1h-2.6z"/></svg>Suchit Ashar</a></div>', unsafe_allow_html=True)
