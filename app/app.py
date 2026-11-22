@@ -68,7 +68,21 @@ CANDLES_URI = _data_uri(
               f'fill="#93C5FD" fill-opacity=".35"/>' for i in range(9))
     + '</svg>')
 
+LATIN = ("U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,"
+         "U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD")
+LATIN_EXT = ("U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,"
+             "U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF")
+
+# Font: Inter (open source), hosted in app/static/fonts and set as theme.font in .streamlit/config.toml.
+# The @font-face rules are repeated here so the font also loads when the config file is not picked up.
 st.markdown(f"""<style>
+@font-face{{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;
+  src:url("./app/static/fonts/inter-latin-wght-normal.woff2") format("woff2");unicode-range:{LATIN}}}
+@font-face{{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;
+  src:url("./app/static/fonts/inter-latin-ext-wght-normal.woff2") format("woff2");unicode-range:{LATIN_EXT}}}
+.stApp strong,.stApp b{{font-weight:700}}
+.stApp h1,.stApp h2,.stApp h3{{letter-spacing:-.015em}}
+.kpi-v,.kt td,.pr .v,.pr .dd,.kpi-d{{font-variant-numeric:tabular-nums}}
 .block-container{{padding-top:3rem;max-width:1380px}}
 header[data-testid="stHeader"]{{background:transparent}}
 [data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -100px top -70px / 500px,
@@ -90,7 +104,10 @@ section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="tr
 section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] p{{color:#FFFFFF !important}}
 section[data-testid="stSidebar"] [data-testid="stRadioOption"]:not([data-selected="true"]):hover,
 section[data-testid="stSidebar"] [role="radiogroup"] label:not(:has(input:checked)):hover{{background:rgba(255,255,255,.08)}}
-section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:#DCE6F5}}
+section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:.97rem;font-weight:500;color:#DCE6F5}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] p,
+section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{font-weight:600}}
+section[data-testid="stSidebar"] .stButton button p{{font-weight:500;font-size:.9rem}}
 section[data-testid="stSidebar"] [data-testid="stIconMaterial"]{{color:inherit}}
 section[data-testid="stSidebar"] .stButton button{{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
   border-radius:10px;justify-content:flex-start}}
@@ -101,7 +118,7 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
   border-top:1px solid rgba(255,255,255,.12);padding-top:1rem}}
 .tb{{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}}
 .tb-title{{font-size:1.45rem;font-weight:700;color:{NAVY}}}
-.tb-tag{{color:{MUTED};font-size:.92rem;border-left:1px solid {LINE};padding-left:.8rem}}
+.tb-tag{{color:#334155;font-size:.92rem;font-weight:500;border-left:1px solid {LINE};padding-left:.8rem}}
 .tb-upd{{color:#334155;font-size:.85rem;text-align:right;margin-top:.35rem;padding:.3rem .6rem;border-radius:8px;
   background:rgba(255,255,255,.82);float:right}}
 .ov-h{{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .1rem;border-left:4px solid {BLUE};padding-left:.8rem}}
@@ -144,18 +161,25 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 .kpi-t{{font-weight:700;color:{NAVY};font-size:1rem;line-height:1.2}}
 .kpi-s{{color:{MUTED};font-size:.78rem}}
 .kpi-mid{{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin:.55rem 0 .35rem}}
-.kpi-v{{font-size:1.85rem;font-weight:700;line-height:1}}
+.kpi-v{{font-size:1.7rem;font-weight:700;line-height:1;letter-spacing:-.02em}}
+.kpi-mid > div{{white-space:nowrap}}
+.kpi-mid > svg{{flex:1 1 40px;min-width:0;max-width:96px;height:auto}}
+.kpi{{overflow:hidden}}
 .kpi-d{{font-size:.85rem;font-weight:600;white-space:nowrap;margin-left:.35rem}}
 .kpi-f{{color:{MUTED};font-size:.78rem}}
 .panel{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:1rem 1.1rem}}
 .panel h3{{font-size:1.25rem;font-weight:700;color:{NAVY};margin:0}}
 .panel .ps{{color:{MUTED};font-size:.85rem;margin:.1rem 0 .6rem}}
-.pr{{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto auto;gap:.6rem;align-items:center;padding:.6rem 0;border-bottom:1px solid #F1F5F9}}
+.pr{{display:grid;grid-template-columns:26px minmax(64px,1fr) auto auto;grid-template-areas:"i n v p" "i n d p";
+  column-gap:.6rem;row-gap:.1rem;align-items:center;padding:.6rem 0;border-bottom:1px solid #F1F5F9}}
+.pr > svg{{grid-area:i}} .pr > .n{{grid-area:n}} .pr > .v{{grid-area:v;align-self:end}}
+.pr > .dd{{grid-area:d;align-self:start}} .pr > :last-child{{grid-area:p}}
 .pr svg{{width:22px;height:22px;stroke:#334155}}
-.pr .n{{font-weight:700;color:{NAVY};font-size:.92rem;line-height:1.2}}
-.pr .n span{{display:block;font-weight:400;color:{MUTED};font-size:.75rem}}
-.pr .v{{font-weight:700;font-size:1rem;text-align:right}}
-.pr .dd{{font-size:.78rem;font-weight:600;text-align:right;white-space:nowrap}}
+.pr .n{{font-weight:700;color:{NAVY};font-size:.9rem;line-height:1.2;overflow-wrap:normal;word-break:normal}}
+.pr .n span{{display:block;font-weight:400;color:{MUTED};font-size:.74rem}}
+.pr .v{{font-weight:700;font-size:.95rem;text-align:right;white-space:nowrap}}
+.pr .dd{{font-size:.74rem;font-weight:600;text-align:right;white-space:nowrap}}
+.pr .pill{{font-size:.7rem;padding:3px 8px}}
 .pill{{border-radius:999px;padding:3px 10px;font-size:.75rem;font-weight:600;white-space:nowrap}}
 .kt{{width:100%;border-collapse:collapse;font-size:.9rem}}
 .kt th{{text-align:left;font-size:.72rem;letter-spacing:.05em;color:{MUTED};background:#F8FAFC;padding:.55rem .6rem;font-weight:700}}
@@ -171,7 +195,7 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 .st-key-brief p,.st-key-brief li{{font-size:.95rem;line-height:1.6}}
 .st-key-brief blockquote{{background:#EEF4FB;border-left:3px solid #1D4ED8;border-radius:0;padding:.4rem .8rem;margin:.6rem 0}}
 .st-key-brief table{{font-size:.88rem}}
-@media (max-width:1100px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
+@media (max-width:1280px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 .ml-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}}
 .ml-brand{{font-size:1.9rem;font-weight:700;color:{NAVY};letter-spacing:-.01em}}
 .ml-brand span{{color:{SAFFRON}}}
