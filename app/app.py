@@ -28,7 +28,7 @@ from storage import db  # noqa: E402
 from transform.checks import run_checks  # noqa: E402
 from transform.normalize import yoy_pct  # noqa: E402
 
-st.set_page_config(page_title="MacroLens", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="MacroLens", page_icon="📈", layout="wide", initial_sidebar_state="auto")  # auto: open on desktop, closed on phones
 BRAND = "MacroLens"
 
 NAVY, SAFFRON, INK, MUTED, LINE = "#0B2545", "#E07B39", "#0B2545", "#64748B", "#E5E7EB"
@@ -255,6 +255,12 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 .st-key-brief blockquote{{background:#EEF4FB;border-left:3px solid #1D4ED8;border-radius:0;padding:.4rem .8rem;margin:.6rem 0}}
 .st-key-brief table{{font-size:.88rem}}
 @media (max-width:1280px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
+@media (max-width:640px){{.kpi-grid{{grid-template-columns:minmax(0,1fr)}} .block-container{{padding-left:1rem;padding-right:1rem}}
+  .kt td,.kt th{{white-space:nowrap}} .tk{{grid-template-columns:28px minmax(0,1fr)}} .tk-t{{grid-column:2}}
+  .chips{{border-left:none;padding-left:0}}}}
+.kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+div[class*="st-key-bsec_"] table,.st-key-bexec table,.st-key-brief table{{display:block;max-width:100%;overflow-x:auto;
+  -webkit-overflow-scrolling:touch}}
 .ml-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}}
 .ml-brand{{font-size:1.9rem;font-weight:700;color:{NAVY};letter-spacing:-.01em}}
 .ml-brand span{{color:{SAFFRON}}}
@@ -566,6 +572,17 @@ with st.sidebar:
               args=("Compare",), kwargs={"compare_set": ["India", "China"]})
     st.button("India vs Euro area", width="stretch", on_click=go_to,
               args=("Compare",), kwargs={"compare_set": ["India", "Euro area"]})
+
+# On phones the open menu covers the page, so close it after the visitor picks a page (desktop is left alone).
+if st.session_state.get("_last_page") not in (None, page):
+    st.html("""<script>(() => {
+      if (window.innerWidth > 768) return;
+      const sb = document.querySelector('[data-testid="stSidebar"]');
+      if (!sb || sb.getAttribute('data-collapsed') === 'true') return;
+      const b = sb.querySelector('[data-testid="stSidebarCollapseButton"] button');
+      if (b) b.click();
+    })();</script>""", unsafe_allow_javascript=True)
+st.session_state["_last_page"] = page
 
 t1, t2, t3, t4 = st.columns([3.6, 1.7, 1.8, 2.3])
 with t1:
@@ -1210,8 +1227,8 @@ def overview(c: str):
                     unsafe_allow_html=True)
         h2.download_button("⤓ Download data (CSV)", table.to_csv(index=False).encode("utf-8"),
                            file_name=f"macrolens_{FLAGS[c]}_key_indicators.csv", mime="text/csv", width="stretch")
-        st.markdown(f'<table class="kt"><tr><th>INDICATOR</th><th>LATEST</th><th>PREVIOUS</th><th>FREQUENCY</th>'
-                    f'<th>SOURCE</th></tr>{html}</table>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kt-wrap"><table class="kt"><tr><th>INDICATOR</th><th>LATEST</th><th>PREVIOUS</th>'
+                    f'<th>FREQUENCY</th><th>SOURCE</th></tr>{html}</table></div>', unsafe_allow_html=True)
     if spec.get("note"):
         st.markdown(f'<div class="note"><b>ⓘ Summary (rule-based):</b>{spec["note"]}</div>', unsafe_allow_html=True)
 
