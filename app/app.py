@@ -61,13 +61,8 @@ WAVE_URI = _data_uri(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" preserveAspectRatio="none">'
     '<path d="M0 110 C60 70 110 140 170 100 S260 40 300 60 V160 H0Z" fill="#3B82F6" fill-opacity=".18"/>'
     '<path d="M0 135 C70 100 120 150 190 125 S270 90 300 100 V160 H0Z" fill="#60A5FA" fill-opacity=".14"/></svg>')
-CANDLES_URI = _data_uri(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120">'
-    '<polyline points="0,104 30,96 55,100 80,84 105,88 130,66 155,72 180,48 205,52 240,18" fill="none" '
-    'stroke="#60A5FA" stroke-opacity=".55" stroke-width="2"/>'
-    + "".join(f'<rect x="{18 + i * 24}" y="{98 - i * 8 - (i % 3) * 4}" width="6" height="{14 + (i % 4) * 5}" '
-              f'fill="#93C5FD" fill-opacity=".35"/>' for i in range(9))
-    + '</svg>')
+# Executive Summary card background: the owner's image, trimmed and faded by tools/make_exec_bg.py
+EXEC_BG_URL = "./app/static/exec_bg.webp"
 
 LATIN = ("U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,"
          "U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD")
@@ -139,9 +134,11 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
 .panel,div[class*="st-key-bsec_"],.st-key-bkey{{background:#FFFFFF}}
 .bh{{display:flex;align-items:center;gap:.55rem;font-size:1.2rem;font-weight:700;color:{NAVY};margin:.1rem 0 .5rem}}
 .bh svg{{width:24px;height:24px;stroke:{BLUE};flex:none}}
-.st-key-bexec{{background:url("{CANDLES_URI}") no-repeat right 14px bottom 10px / 230px,
-  linear-gradient(135deg,#0B2545 0%,#0F3466 60%,#1B4F9C 100%);border-radius:16px;padding:1.2rem 1.4rem 1rem;
-  box-shadow:0 10px 28px rgba(11,37,69,.28)}}
+.st-key-bexec{{background:linear-gradient(90deg,rgba(12,22,82,.5) 0%,rgba(12,22,82,.18) 55%,rgba(12,22,82,0) 82%),
+  url("{EXEC_BG_URL}") no-repeat center bottom / 100% auto,
+  linear-gradient(90deg,#132163 0%,#022F6D 50%,#013770 100%);border-radius:16px;padding:1.3rem 1.5rem 1.1rem;
+  box-shadow:0 10px 28px rgba(11,37,69,.28);overflow:hidden}}
+.st-key-bexec p,.st-key-bexec li,.st-key-bexec .bh{{text-shadow:0 1px 2px rgba(0,8,40,.35)}}
 .st-key-bexec .bh{{color:#FFFFFF;font-size:1.45rem}}
 .st-key-bexec .bh svg{{stroke:#93C5FD}}
 .st-key-bexec p,.st-key-bexec li,.st-key-bexec strong,.st-key-bexec em,.st-key-bexec td,.st-key-bexec th{{color:#E6EEF9 !important}}
