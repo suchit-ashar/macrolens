@@ -554,11 +554,11 @@ upd = pd.to_datetime(summary["fetched_at"].dropna(), utc=True).max() if summary[
 upd_txt = f"Last updated: {upd.tz_convert(timezone(timedelta(hours=5, minutes=30))):%d %b %Y, %H:%M} IST" if upd is not None else ""
 COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan"]
 FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp"}
-PAGES = {":material/home: Overview": "Overview", ":material/newspaper: Daily briefing": "Daily briefing",
+PAGES = {":material/newspaper: Daily briefing": "Daily briefing", ":material/home: Overview": "Overview",
          ":material/public: Countries": "Countries",
          ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare",
          ":material/database: Data sources": "Data sources"}
-st.session_state.setdefault("page", ":material/home: Overview")
+st.session_state.setdefault("page", ":material/newspaper: Daily briefing")  # the site opens on today's briefing
 st.session_state.setdefault("country_pick", "India")
 st.session_state.setdefault("compare_set", ["India", "United States", "Euro area", "China", "Japan"])
 
