@@ -86,7 +86,8 @@ header[data-testid="stHeader"]{{background:transparent}}
 @media (max-width:900px){{[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -90px top -50px / 300px,
   linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}}}
 section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat bottom / 100% 190px,
-  linear-gradient(180deg,#0B2545 0%,#0E3260 55%,#123C74 100%);border-right:none}}
+  radial-gradient(120% 40% at 0% 0%,rgba(14,58,120,.55),rgba(14,58,120,0) 70%),
+  linear-gradient(180deg,#03244A 0%,#011E3F 45%,#011B3B 80%,#02224A 100%);border-right:none}}
 section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button,
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button{{color:#CBD5E1}}
 section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.6rem .8rem;border-radius:10px;margin:2px 0;width:100%}}
@@ -104,9 +105,10 @@ section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="tr
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{font-weight:600}}
 section[data-testid="stSidebar"] .stButton button p{{font-weight:500;font-size:.9rem}}
 section[data-testid="stSidebar"] [data-testid="stIconMaterial"]{{color:inherit}}
-section[data-testid="stSidebar"] .stButton button{{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+section[data-testid="stSidebar"] .stButton button{{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);
   border-radius:10px;justify-content:flex-start}}
-section[data-testid="stSidebar"] .stButton button p{{color:#E2E8F0}}
+section[data-testid="stSidebar"] .stButton button p{{color:#E2E8F0;text-align:left}}
+section[data-testid="stSidebar"] .stButton button > div{{justify-content:flex-start;width:100%}}
 section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}}
 .sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.4rem;font-weight:700;color:#FFFFFF;margin:.2rem 0 1rem}}
 .sb-sub{{font-size:.72rem;font-weight:700;color:#8FA6C8;letter-spacing:.08em;margin:1.2rem 0 .4rem;
