@@ -21,8 +21,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from html import escape as html_escape  # noqa: E402
 
+import importlib  # noqa: E402
+
 from analytics import briefing as bf  # noqa: E402
 from analytics import signals as sg  # noqa: E402
+
+# Streamlit keeps imported modules in memory between reruns. After a deploy, a rerun can start before the
+# helper files are refreshed and then call a function the old copy does not have (happened 22 Nov 2026).
+# Reloading these two small, pure modules on every run costs about a millisecond and rules that out.
+bf, sg = importlib.reload(bf), importlib.reload(sg)
 from ingest.registry import load_registry  # noqa: E402
 from storage import db  # noqa: E402
 from transform.checks import run_checks  # noqa: E402
