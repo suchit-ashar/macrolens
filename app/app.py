@@ -52,32 +52,9 @@ def _data_uri(svg_text: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg_text.encode("utf-8")).decode("ascii")
 
 
-@st.cache_resource
-def globe_uri() -> str:
-    """Decorative dotted globe (orthographic projection of a lat/lon dot grid), drawn once as an SVG data URI."""
-    import math
-    size, r, lat0, lon0 = 440, 200, math.radians(18), math.radians(25)
-    buckets: dict[float, list[str]] = {}
-    for lat_d in range(-84, 85, 5):
-        lat = math.radians(lat_d)
-        n = max(6, round(72 * math.cos(lat)))
-        for k in range(n):
-            lon = -math.pi + 2 * math.pi * k / n
-            cosc = math.sin(lat0) * math.sin(lat) + math.cos(lat0) * math.cos(lat) * math.cos(lon - lon0)
-            if cosc <= 0.04:
-                continue
-            x = size / 2 + r * math.cos(lat) * math.sin(lon - lon0)
-            y = size / 2 - r * (math.cos(lat0) * math.sin(lat) - math.sin(lat0) * math.cos(lat) * math.cos(lon - lon0))
-            op = round(0.08 + 0.36 * cosc, 2)
-            buckets.setdefault(op, []).append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.9 + 1.4 * cosc:.1f}"/>')
-    dots = "".join(f'<g fill-opacity="{op}">{"".join(c)}</g>' for op, c in sorted(buckets.items()))
-    return _data_uri(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
-        f'<defs><radialGradient id="g" cx="62%" cy="38%" r="65%"><stop offset="0" stop-color="#DBEAFE" stop-opacity=".9"/>'
-        f'<stop offset="1" stop-color="#DBEAFE" stop-opacity="0"/></radialGradient></defs>'
-        f'<circle cx="{size / 2}" cy="{size / 2}" r="{r + 14}" fill="url(#g)"/>'
-        f'<g fill="{BLUE}">{dots}</g></svg>')
-
+# Dotted world globe behind the page header: app/static/globe.png, drawn by tools/make_globe.py from Natural Earth
+# land outlines and served by Streamlit's static file serving ([server] enableStaticServing in .streamlit/config.toml).
+GLOBE_URL = "./app/static/globe.png"
 
 WAVE_URI = _data_uri(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" preserveAspectRatio="none">'
@@ -94,9 +71,11 @@ CANDLES_URI = _data_uri(
 st.markdown(f"""<style>
 .block-container{{padding-top:3rem;max-width:1380px}}
 header[data-testid="stHeader"]{{background:transparent}}
-[data-testid="stMain"]{{background:url("{globe_uri()}") no-repeat right -80px top -60px / 460px,
-  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}
-@media (max-width:900px){{[data-testid="stMain"]{{background-size:300px,auto;background-position:right -90px top -60px,0 0}}}}
+[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -100px top -70px / 500px,
+  radial-gradient(circle 236px at calc(100% - 150px) 180px,rgba(191,219,254,.6),rgba(219,234,254,.38) 72%,rgba(219,234,254,0) 100%),
+  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local,local}}
+@media (max-width:900px){{[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -90px top -50px / 300px,
+  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}}}
 section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat bottom / 100% 190px,
   linear-gradient(180deg,#0B2545 0%,#0E3260 55%,#123C74 100%);border-right:none}}
 section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button,
@@ -129,6 +108,7 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
 .ov-h img{{height:28px;border-radius:4px;border:1px solid {LINE}}}
 .ov-h h1{{font-size:2.1rem;font-weight:800;color:{NAVY};margin:0;padding:0;letter-spacing:-.01em}}
 .ov-h h1 span{{color:{BLUE}}}
+@media (max-width:700px){{.ov-h h1{{font-size:1.45rem}}}}
 .ov-ok{{background:#DCFCE7;color:#166534;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
 .ov-warn{{background:#FEF3C7;color:#92400E;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
 .ov-sub{{color:{MUTED};font-size:.98rem;margin:0 0 .9rem;padding-left:calc(.8rem + 4px)}}

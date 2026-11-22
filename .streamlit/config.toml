@@ -3,6 +3,8 @@ gatherUsageStats = false
 
 [server]
 headless = true
+# serves app/static/ (the globe image behind the page header) at ./app/static/
+enableStaticServing = true
 
 [client]
 toolbarMode = "minimal"
