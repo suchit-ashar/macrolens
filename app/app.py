@@ -18,6 +18,9 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from html import escape as html_escape  # noqa: E402
+
+from analytics import briefing as bf  # noqa: E402
 from analytics import signals as sg  # noqa: E402
 from ingest.registry import load_registry  # noqa: E402
 from storage import db  # noqa: E402
@@ -41,34 +44,121 @@ LIGHT = {"good": ("#16A34A", "#DCFCE7", "#166534"), "watch": ("#D97706", "#FEF3C
 COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C", "JP": "#7C3AED", "GLOBAL": "#475569"}
 SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED", "#0F766E", "#B45309"]
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
+BLUE = "#2563EB"
+
+
+def _data_uri(svg_text: str) -> str:
+    import base64
+    return "data:image/svg+xml;base64," + base64.b64encode(svg_text.encode("utf-8")).decode("ascii")
+
+
+@st.cache_resource
+def globe_uri() -> str:
+    """Decorative dotted globe (orthographic projection of a lat/lon dot grid), drawn once as an SVG data URI."""
+    import math
+    size, r, lat0, lon0 = 440, 200, math.radians(18), math.radians(25)
+    buckets: dict[float, list[str]] = {}
+    for lat_d in range(-84, 85, 5):
+        lat = math.radians(lat_d)
+        n = max(6, round(72 * math.cos(lat)))
+        for k in range(n):
+            lon = -math.pi + 2 * math.pi * k / n
+            cosc = math.sin(lat0) * math.sin(lat) + math.cos(lat0) * math.cos(lat) * math.cos(lon - lon0)
+            if cosc <= 0.04:
+                continue
+            x = size / 2 + r * math.cos(lat) * math.sin(lon - lon0)
+            y = size / 2 - r * (math.cos(lat0) * math.sin(lat) - math.sin(lat0) * math.cos(lat) * math.cos(lon - lon0))
+            op = round(0.08 + 0.36 * cosc, 2)
+            buckets.setdefault(op, []).append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.9 + 1.4 * cosc:.1f}"/>')
+    dots = "".join(f'<g fill-opacity="{op}">{"".join(c)}</g>' for op, c in sorted(buckets.items()))
+    return _data_uri(
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
+        f'<defs><radialGradient id="g" cx="62%" cy="38%" r="65%"><stop offset="0" stop-color="#DBEAFE" stop-opacity=".9"/>'
+        f'<stop offset="1" stop-color="#DBEAFE" stop-opacity="0"/></radialGradient></defs>'
+        f'<circle cx="{size / 2}" cy="{size / 2}" r="{r + 14}" fill="url(#g)"/>'
+        f'<g fill="{BLUE}">{dots}</g></svg>')
+
+
+WAVE_URI = _data_uri(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" preserveAspectRatio="none">'
+    '<path d="M0 110 C60 70 110 140 170 100 S260 40 300 60 V160 H0Z" fill="#3B82F6" fill-opacity=".18"/>'
+    '<path d="M0 135 C70 100 120 150 190 125 S270 90 300 100 V160 H0Z" fill="#60A5FA" fill-opacity=".14"/></svg>')
+CANDLES_URI = _data_uri(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120">'
+    '<polyline points="0,104 30,96 55,100 80,84 105,88 130,66 155,72 180,48 205,52 240,18" fill="none" '
+    'stroke="#60A5FA" stroke-opacity=".55" stroke-width="2"/>'
+    + "".join(f'<rect x="{18 + i * 24}" y="{98 - i * 8 - (i % 3) * 4}" width="6" height="{14 + (i % 4) * 5}" '
+              f'fill="#93C5FD" fill-opacity=".35"/>' for i in range(9))
+    + '</svg>')
 
 st.markdown(f"""<style>
 .block-container{{padding-top:3rem;max-width:1380px}}
-section[data-testid="stSidebar"]{{background:#F8FAFC;border-right:1px solid {LINE}}}
-section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.55rem .75rem;border-radius:10px;margin:2px 0;width:100%}}
-section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){{background:{NAVY}}}
+header[data-testid="stHeader"]{{background:transparent}}
+[data-testid="stMain"]{{background:url("{globe_uri()}") no-repeat right -80px top -60px / 460px,
+  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}
+@media (max-width:900px){{[data-testid="stMain"]{{background-size:300px,auto;background-position:right -90px top -60px,0 0}}}}
+section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat bottom / 100% 190px,
+  linear-gradient(180deg,#0B2545 0%,#0E3260 55%,#123C74 100%);border-right:none}}
+section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button,
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button{{color:#CBD5E1}}
+section[data-testid="stSidebar"] [role="radiogroup"] label{{padding:.6rem .8rem;border-radius:10px;margin:2px 0;width:100%}}
+section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){{background:{BLUE}}}
 section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{{color:#FFFFFF !important}}
 section[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child:not([data-testid]),
 section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child:not(:has([data-testid])){{display:none !important}}
-section[data-testid="stSidebar"] [data-testid="stRadioOption"]{{width:100%;padding:.55rem .75rem;border-radius:10px}}
-section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"]{{background:{NAVY}}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"]{{width:100%;padding:.6rem .8rem;border-radius:10px}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"]{{background:{BLUE};box-shadow:0 4px 14px rgba(37,99,235,.35)}}
 section[data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] p{{color:#FFFFFF !important}}
-section[data-testid="stSidebar"] [data-testid="stRadioOption"]:not([data-selected="true"]):hover{{background:#EEF2F6}}
-section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:{NAVY}}}
-.sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.35rem;font-weight:700;color:{NAVY};margin:.2rem 0 1rem}}
-.sb-sub{{font-size:.72rem;font-weight:700;color:{MUTED};letter-spacing:.06em;margin:1.2rem 0 .4rem}}
+section[data-testid="stSidebar"] [data-testid="stRadioOption"]:not([data-selected="true"]):hover,
+section[data-testid="stSidebar"] [role="radiogroup"] label:not(:has(input:checked)):hover{{background:rgba(255,255,255,.08)}}
+section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;color:#DCE6F5}}
+section[data-testid="stSidebar"] [data-testid="stIconMaterial"]{{color:inherit}}
+section[data-testid="stSidebar"] .stButton button{{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;justify-content:flex-start}}
+section[data-testid="stSidebar"] .stButton button p{{color:#E2E8F0}}
+section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}}
+.sb-brand{{display:flex;align-items:center;gap:.5rem;font-size:1.4rem;font-weight:700;color:#FFFFFF;margin:.2rem 0 1rem}}
+.sb-sub{{font-size:.72rem;font-weight:700;color:#8FA6C8;letter-spacing:.08em;margin:1.2rem 0 .4rem;
+  border-top:1px solid rgba(255,255,255,.12);padding-top:1rem}}
 .tb{{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}}
 .tb-title{{font-size:1.45rem;font-weight:700;color:{NAVY}}}
 .tb-tag{{color:{MUTED};font-size:.92rem;border-left:1px solid {LINE};padding-left:.8rem}}
-.tb-upd{{color:{MUTED};font-size:.85rem;text-align:right;padding-top:.55rem}}
-.ov-h{{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .1rem}}
+.tb-upd{{color:#334155;font-size:.85rem;text-align:right;margin-top:.35rem;padding:.3rem .6rem;border-radius:8px;
+  background:rgba(255,255,255,.82);float:right}}
+.ov-h{{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .1rem;border-left:4px solid {BLUE};padding-left:.8rem}}
 .ov-h img{{height:28px;border-radius:4px;border:1px solid {LINE}}}
-.ov-h h1{{font-size:1.9rem;font-weight:700;color:{NAVY};margin:0;padding:0}}
+.ov-h h1{{font-size:2.1rem;font-weight:800;color:{NAVY};margin:0;padding:0;letter-spacing:-.01em}}
+.ov-h h1 span{{color:{BLUE}}}
 .ov-ok{{background:#DCFCE7;color:#166534;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
 .ov-warn{{background:#FEF3C7;color:#92400E;border-radius:8px;padding:2px 10px;font-size:.82rem;font-weight:600}}
-.ov-sub{{color:{MUTED};font-size:.98rem;margin:0 0 .9rem}}
+.ov-sub{{color:{MUTED};font-size:.98rem;margin:0 0 .9rem;padding-left:calc(.8rem + 4px)}}
 .kpi-grid{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem;margin-bottom:.9rem}}
-.kpi{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:.9rem 1rem}}
+.kpi{{background:#FFFFFF;border:1px solid {LINE};border-radius:14px;padding:.9rem 1rem;
+  box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 18px rgba(15,23,42,.05)}}
+.kpi-good{{background:linear-gradient(180deg,#F0FDF4,#FFFFFF 70%);border-color:#D1FAE5}}
+.kpi-bad{{background:linear-gradient(180deg,#FEF2F2,#FFFFFF 70%);border-color:#FEE2E2}}
+.kpi-watch{{background:linear-gradient(180deg,#FFFBEB,#FFFFFF 70%);border-color:#FEF3C7}}
+.panel,[data-testid="stVerticalBlockBorderWrapper"]{{box-shadow:0 1px 2px rgba(15,23,42,.03),0 6px 18px rgba(15,23,42,.04)}}
+.panel,div[class*="st-key-bsec_"],.st-key-bkey{{background:#FFFFFF}}
+.bh{{display:flex;align-items:center;gap:.55rem;font-size:1.2rem;font-weight:700;color:{NAVY};margin:.1rem 0 .5rem}}
+.bh svg{{width:24px;height:24px;stroke:{BLUE};flex:none}}
+.st-key-bexec{{background:url("{CANDLES_URI}") no-repeat right 14px bottom 10px / 230px,
+  linear-gradient(135deg,#0B2545 0%,#0F3466 60%,#1B4F9C 100%);border-radius:16px;padding:1.2rem 1.4rem 1rem;
+  box-shadow:0 10px 28px rgba(11,37,69,.28)}}
+.st-key-bexec .bh{{color:#FFFFFF;font-size:1.45rem}}
+.st-key-bexec .bh svg{{stroke:#93C5FD}}
+.st-key-bexec p,.st-key-bexec li,.st-key-bexec strong,.st-key-bexec em,.st-key-bexec td,.st-key-bexec th{{color:#E6EEF9 !important}}
+.st-key-bexec strong{{color:#FFFFFF !important}}
+.st-key-bexec p,.st-key-bexec li{{font-size:.95rem;line-height:1.6}}
+.st-key-bexec a{{color:#93C5FD !important}}
+.bmeta{{display:flex;align-items:center;gap:.5rem;color:{NAVY};font-size:.9rem;background:#FFFFFF;border:1px solid {LINE};
+  border-radius:10px;padding:.55rem .8rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}}
+.bmeta svg{{width:20px;height:20px;stroke:{BLUE};flex:none}}
+.bsnap{{color:{MUTED};font-size:.8rem;margin:-.3rem 0 .9rem}}
+.bnotes{{color:{MUTED};font-size:.8rem;line-height:1.5;margin:.6rem 0}}
+div[class*="st-key-bsec_"] p,div[class*="st-key-bsec_"] li,.st-key-bkey p,.st-key-bkey li{{font-size:.93rem;line-height:1.6}}
+div[class*="st-key-bsec_"] h3{{font-size:1rem !important;color:{NAVY}}}
+div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 .kpi-top{{display:flex;gap:.6rem;align-items:flex-start}}
 .kpi-top svg{{width:26px;height:26px;stroke:{NAVY};flex:none;margin-top:2px}}
 .kpi-t{{font-weight:700;color:{NAVY};font-size:1rem;line-height:1.2}}
@@ -392,8 +482,8 @@ def go_to(page: str, **state):
 
 with st.sidebar:
     st.markdown(f'<div class="sb-brand"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" '
-                f'rx="1" fill="{SAFFRON}"/><rect x="10" y="7" width="4" height="14" rx="1" fill="#1D4ED8"/><rect x="17" y="3" '
-                f'width="4" height="18" rx="1" fill="{NAVY}"/></svg>{BRAND}</div>', unsafe_allow_html=True)
+                f'rx="1" fill="{SAFFRON}"/><rect x="10" y="7" width="4" height="14" rx="1" fill="#3B82F6"/><rect x="17" y="3" '
+                f'width="4" height="18" rx="1" fill="#60A5FA"/></svg>{BRAND}</div>', unsafe_allow_html=True)
     page = PAGES[st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed")]
     st.markdown('<div class="sb-sub">QUICK COMPARE</div>', unsafe_allow_html=True)
     st.button("India vs United States", width="stretch", on_click=go_to,
@@ -833,6 +923,15 @@ ICON = {
     "ship": '<path d="M3 18l-1-5h20l-2 5M5 13V8h9l4 5M8 8V4h3"/><path d="M2 21c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/>',
     "credit": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/>',
     "flow": '<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
+    "globe": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/>',
+    "link": '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/>',
+    "calendar": '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    "target": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3"/>',
+    "alert": '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.3v.2"/>',
+    "bulb": '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
+    "help": '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.2 1-1.2 1.9v.5M12 16.8v.2"/>',
+    "doc": '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 11h6M9 14.5h6M9 18h4"/>',
+    "story": '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/>',
 }
 LEVEL_COLOR = {"good": "#15803D", "watch": "#B45309", "bad": "#B91C1C", "neutral": NAVY}
 
@@ -902,7 +1001,7 @@ def kpi(icon: str, title: str, sub: str, iid: str, *, df: pd.DataFrame | None = 
         pv = f"{prev:.1f}%" if short else fmt_value(prev, unit)
         prev_txt = f" &nbsp;|&nbsp; Prev: {pv}"
     sig = f'<div class="kpi-f" style="color:{color};margin-top:.15rem">{signal.text}</div>' if signal and signal.text else ""
-    return (f'<div class="kpi"><div class="kpi-top">{svg(icon)}<div><div class="kpi-t">{title}</div>'
+    return (f'<div class="kpi kpi-{level}"><div class="kpi-top">{svg(icon)}<div><div class="kpi-t">{title}</div>'
             f'<div class="kpi-s">{sub}</div></div></div><div class="kpi-mid"><div><span class="kpi-v" style="color:{color}">'
             f'{value}</span>{change}</div>{spark(data, color if level != "neutral" else "#1D4ED8")}</div>'
             f'<div class="kpi-f">{when}{prev_txt}</div>{sig}</div>')
@@ -1009,7 +1108,7 @@ def overview(c: str):
     q = quality(stamp)
     ok = int((q["severity"] == "error").sum()) == 0
     badge = '<span class="ov-ok">✓ Data verified</span>' if ok else '<span class="ov-warn">Data check pending</span>'
-    st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[c]}.png" alt=""><h1>{c} | Economic overview</h1>'
+    st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[c]}.png" alt=""><h1>{c} | <span>Economic overview</span></h1>'
                 f'{badge}</div><div class="ov-sub">Key macroeconomic indicators, trends and outlook for {c}, '
                 'from official sources.</div>', unsafe_allow_html=True)
     spec = COUNTRY_SPECS[c]()
@@ -1254,7 +1353,7 @@ def compare_page():
 
 
 # ======================= daily briefing =======================
-# Written each morning (08:40 IST) by a Claude cloud routine and pushed to the `claude/briefings`
+# Written each morning (08:40 IST) by the owner's scheduled AI task (ChatGPT since 2026-11-22) and pushed to the `claude/briefings`
 # branch as briefings/YYYY-MM-DD.md plus briefings/index.json. The site reads them straight from
 # GitHub, so new briefings appear without a redeploy. A local briefings/ folder is used as fallback.
 BRIEF_RAW = "https://raw.githubusercontent.com/suchit-ashar/macrolens/refs/heads/claude/briefings/briefings/"
@@ -1321,25 +1420,73 @@ def briefing_card():
             st.markdown(latest["summary"])
 
 
+def bsection(key: str, title: str, body: str, icon: str | None = None, border: bool = True):
+    """One briefing card: icon heading + the section's Markdown (rendered without raw HTML)."""
+    with st.container(border=border, key=key):
+        st.markdown(f'<div class="bh">{svg(icon or bf.icon_for(title))}{html_escape(title)}</div>', unsafe_allow_html=True)
+        st.markdown(body or "_Not included in this briefing._")
+
+
 def briefing_page():
-    st.markdown(f'<div class="ov-h"><h1>Daily market briefing</h1></div>'
-                f'<div class="ov-sub">Global and Indian markets, every morning before the Indian open.</div>',
+    st.markdown('<div class="ov-h"><h1>Daily Market <span>Briefing</span></h1></div>'
+                '<div class="ov-sub">Global and Indian markets, every morning before the Indian open.</div>',
                 unsafe_allow_html=True)
     idx = briefing_index()
     if not idx:
         st.info("The first briefing will appear after the next 08:40 IST run.")
         return
     dates = [i["date"] for i in idx]
-    pick = st.selectbox("Briefing date", dates, index=0, key="brief_date",
+    c1, c2 = st.columns([1.25, 3], vertical_alignment="bottom")
+    pick = c1.selectbox("Briefing date", dates, index=0, key="brief_date",
                         format_func=lambda d: f"{pd.Timestamp(d):%A, %d %b %Y}" + ("  (latest)" if d == dates[0] else ""))
     item = next(i for i in idx if i["date"] == pick)
-    st.markdown(f'<div class="ml-cap">ⓘ {BRIEF_NOTE}</div>', unsafe_allow_html=True)
     text = briefing_text(item.get("file") or f"{pick}.md")
     if text is None:
         st.warning("This briefing could not be loaded right now. Try again in a minute.")
         return
-    with st.container(border=True, key="brief"):
-        st.markdown(text)  # rendered as plain markdown; raw HTML in the file is not executed
+    b = bf.split_briefing(text)
+    if b.cutoff:
+        c2.caption(b.cutoff)
+    st.markdown(f'<div class="ml-cap">ⓘ {BRIEF_NOTE}</div>', unsafe_allow_html=True)
+
+    # Market snapshot from MacroLens's own feeds (not from the AI text), so the headline numbers are verified data.
+    kpi_row([kpi("yield", "US 10Y Treasury", "Yield, constant maturity (FRED)", "us_10y", how="bp",
+                 signal=sg.yield_move(get("us_10y"))),
+             kpi("drop", "Brent crude", "US$ per barrel, spot (FRED)", "brent", how="pct"),
+             kpi("fx", "Rupee", "₹ per US$ (FBIL reference)", "inr_usd", how="pct", good="down",
+                 signal=sg.local_currency(get("inr_usd"))),
+             kpi("globe", "US dollar index", "Broad, Federal Reserve", "us_dollar_broad", how="pct")])
+    st.markdown('<div class="bsnap">Snapshot: latest official data in MacroLens (dates on each card). '
+                'The briefing below is written separately by AI.</div>', unsafe_allow_html=True)
+
+    execsum = b.take("executive summary")
+    if execsum is None:  # unexpected format: show the file as it is
+        with st.container(border=True, key="brief"):
+            st.markdown(text)
+        return
+    events = b.take("what to watch", "today's key events", "key events")
+    left, right = st.columns([1.35, 1], gap="medium")
+    with left:
+        bsection("bexec", "Executive Summary", execsum[1], "doc", border=False)
+    with right:
+        bsection("bsec_events", "Today's key events", events[1] if events else "", "calendar")
+
+    takeaways = [s for s in (b.take("3 things"), b.take("2 risks", "risks"), b.take("2 opportunities", "opportunities"))
+                 if s]
+    if takeaways:
+        for col, (i, (h, body)) in zip(st.columns(len(takeaways), gap="medium"), enumerate(takeaways)):
+            with col:
+                bsection(f"bsec_take{i}", h, body)
+    pair_secs = [s for s in (b.take("today's market narrative", "market narrative"), b.take("1 key question", "key question"))
+                 if s]
+    if pair_secs:
+        for col, (i, (h, body)) in zip(st.columns(len(pair_secs), gap="medium"), enumerate(pair_secs)):
+            with col:
+                bsection(f"bsec_pair{i}", h, body)
+    for i, (h, body) in enumerate(b.sections):
+        bsection(f"bsec_{i}", h, body)
+    if b.notes:
+        st.caption(b.notes)
 
 
 def data_sources_page():
@@ -1371,7 +1518,7 @@ elif page == "Countries":
     countries_page()
 elif page == "Indicators":
     st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[country]}.png" alt=""><h1>{country} | '
-                f'Indicators</h1></div><div class="ov-sub">Every series we track for {country}, by topic.</div>',
+                f'<span>Indicators</span></h1></div><div class="ov-sub">Every series we track for {country}, by topic.</div>',
                 unsafe_allow_html=True)
     VIEWS[country]()
 elif page == "Compare":
