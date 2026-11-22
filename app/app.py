@@ -368,7 +368,8 @@ upd = pd.to_datetime(summary["fetched_at"].dropna(), utc=True).max() if summary[
 upd_txt = f"Last updated: {upd.tz_convert(timezone(timedelta(hours=5, minutes=30))):%d %b %Y, %H:%M} IST" if upd is not None else ""
 COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan"]
 FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp"}
-PAGES = {":material/home: Overview": "Overview", ":material/public: Countries": "Countries",
+PAGES = {":material/home: Overview": "Overview", ":material/newspaper: Daily briefing": "Daily briefing",
+         ":material/public: Countries": "Countries",
          ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare",
          ":material/database: Data sources": "Data sources"}
 st.session_state.setdefault("page", ":material/home: Overview")
@@ -1245,6 +1246,95 @@ def compare_page():
     compare(codes)
 
 
+# ======================= daily briefing =======================
+# Written each morning (08:40 IST) by a Claude cloud routine and pushed to the `claude/briefings`
+# branch as briefings/YYYY-MM-DD.md plus briefings/index.json. The site reads them straight from
+# GitHub, so new briefings appear without a redeploy. A local briefings/ folder is used as fallback.
+BRIEF_RAW = "https://raw.githubusercontent.com/suchit-ashar/macrolens/refs/heads/claude/briefings/briefings/"
+BRIEF_LOCAL = Path(__file__).resolve().parent.parent / "briefings"
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def briefing_index() -> list[dict]:
+    import json
+    import requests
+    try:
+        r = requests.get(BRIEF_RAW + "index.json", timeout=15)
+        if r.status_code == 200:
+            items = r.json()
+            if isinstance(items, list):
+                return sorted([i for i in items if isinstance(i, dict) and i.get("date")],
+                              key=lambda i: i["date"], reverse=True)
+    except (requests.RequestException, ValueError):
+        pass
+    if BRIEF_LOCAL.exists():  # fallback: local folder (development, or before the first run)
+        idx = BRIEF_LOCAL / "index.json"
+        if idx.exists():
+            try:
+                return sorted(json.loads(idx.read_text(encoding="utf-8")), key=lambda i: i["date"], reverse=True)
+            except ValueError:
+                pass
+        return [{"date": p.stem, "file": p.name, "title": f"Daily Market Briefing — {p.stem}", "summary": ""}
+                for p in sorted(BRIEF_LOCAL.glob("20*.md"), reverse=True)]
+    return []
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def briefing_text(file: str) -> str | None:
+    import requests
+    if not file or "/" in file or "\\" in file or not file.endswith(".md"):
+        return None
+    try:
+        r = requests.get(BRIEF_RAW + file, timeout=15)
+        if r.status_code == 200:
+            return r.content.decode("utf-8-sig", errors="replace")
+    except requests.RequestException:
+        pass
+    p = BRIEF_LOCAL / file
+    return p.read_text(encoding="utf-8-sig") if p.exists() else None
+
+
+BRIEF_NOTE = ("AI-generated each morning at about 08:40 IST from web searches of public sources (central banks, "
+              "exchanges, statistical agencies, major financial news). It can contain errors: check the cited sources "
+              "before acting on anything. Not investment advice.")
+
+
+def briefing_card():
+    idx = briefing_index()
+    if not idx:
+        return
+    latest = idx[0]
+    with st.container(border=True):
+        a, b = st.columns([5, 1])
+        a.markdown(f'<h3 style="margin:0;color:{NAVY};font-size:1.25rem">📰 Today\'s market briefing</h3>'
+                   f'<div style="color:{MUTED};font-size:.85rem">{latest["date"]} · AI-generated at 08:40 IST</div>',
+                   unsafe_allow_html=True)
+        b.button("Read briefing", on_click=go_to, args=("Daily briefing",), width="stretch")
+        if latest.get("summary"):
+            st.markdown(latest["summary"])
+
+
+def briefing_page():
+    st.markdown(f'<div class="ov-h"><h1>Daily market briefing</h1></div>'
+                f'<div class="ov-sub">Global and Indian markets, every morning before the Indian open.</div>',
+                unsafe_allow_html=True)
+    idx = briefing_index()
+    if not idx:
+        st.info("The first briefing will appear after the next 08:40 IST run.")
+        return
+    dates = [i["date"] for i in idx]
+    pick = st.selectbox("Briefing date", dates, index=0, key="brief_date",
+                        format_func=lambda d: f"{pd.Timestamp(d):%A, %d %b %Y}" + ("  (latest)" if d == dates[0] else ""))
+    item = next(i for i in idx if i["date"] == pick)
+    st.markdown(f'<div class="ml-cap">ⓘ {BRIEF_NOTE}</div>', unsafe_allow_html=True)
+    text = briefing_text(item.get("file") or f"{pick}.md")
+    if text is None:
+        st.warning("This briefing could not be loaded right now. Try again in a minute.")
+        return
+    with st.container(border=True):
+        st.markdown(text)  # rendered as plain markdown; raw HTML in the file is not executed
+
+
 def data_sources_page():
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, Union Budget, CGA, Ministry of Commerce, "
@@ -1267,6 +1357,9 @@ def data_sources_page():
 
 if page == "Overview":
     overview(country)
+    briefing_card()
+elif page == "Daily briefing":
+    briefing_page()
 elif page == "Countries":
     countries_page()
 elif page == "Indicators":

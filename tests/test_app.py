@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest  # noqa: E402
 APP = str(Path(__file__).resolve().parent.parent / "app" / "app.py")
 DATA = Path(__file__).resolve().parent.parent / "data" / "clean"
 PAGES = [":material/home: Overview", ":material/public: Countries", ":material/bar_chart: Indicators",
-         ":material/compare_arrows: Compare", ":material/database: Data sources"]
+         ":material/compare_arrows: Compare", ":material/database: Data sources", ":material/newspaper: Daily briefing"]
 COUNTRIES = ["India", "United States", "Euro area", "China", "Japan"]
 
 pytestmark = pytest.mark.skipif(not any(DATA.glob("*.parquet")), reason="no stored data")
@@ -34,7 +34,7 @@ def test_indicators_each_country(country):
     assert not at.exception, at.exception
 
 
-@pytest.mark.parametrize("page", [PAGES[1], PAGES[3], PAGES[4]])
+@pytest.mark.parametrize("page", [PAGES[1], PAGES[3], PAGES[4], PAGES[5]])
 def test_other_pages(page):
     at = run(page, "India")
     assert not at.exception, at.exception
