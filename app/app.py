@@ -53,9 +53,9 @@ def _data_uri(svg_text: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg_text.encode("utf-8")).decode("ascii")
 
 
-# Dotted world globe behind the page header: app/static/globe.png, drawn by tools/make_globe.py from Natural Earth
+# Dotted world globe behind the page header: app/static/globe.webp, drawn by tools/make_globe.py from Natural Earth
 # land outlines and served by Streamlit's static file serving ([server] enableStaticServing in .streamlit/config.toml).
-GLOBE_URL = "./app/static/globe.png"
+GLOBE_URL = "./app/static/globe.webp"
 
 WAVE_URI = _data_uri(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" preserveAspectRatio="none">'
@@ -86,9 +86,8 @@ st.markdown(f"""<style>
 .kpi-v,.kt td,.pr .v,.pr .dd,.kpi-d{{font-variant-numeric:tabular-nums}}
 .block-container{{padding-top:3rem;max-width:1380px}}
 header[data-testid="stHeader"]{{background:transparent}}
-[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -100px top -70px / 500px,
-  radial-gradient(circle 236px at calc(100% - 150px) 180px,rgba(191,219,254,.6),rgba(219,234,254,.38) 72%,rgba(219,234,254,0) 100%),
-  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local,local}}
+[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -110px top -90px / 520px,
+  linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}
 @media (max-width:900px){{[data-testid="stMain"]{{background:url("{GLOBE_URL}") no-repeat right -90px top -50px / 300px,
   linear-gradient(180deg,#EDF3FC 0,#F7FAFE 360px,#FFFFFF 640px);background-attachment:local,local}}}}
 section[data-testid="stSidebar"]{{background:url("{WAVE_URI}") no-repeat bottom / 100% 190px,
