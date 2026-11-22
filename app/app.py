@@ -53,6 +53,12 @@ COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C
 SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED", "#0F766E", "#B45309"]
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 BLUE = "#2563EB"
+# Owner credit ("Developed by …"), shown in the top bar and the footer
+LINKEDIN_URL = "https://www.linkedin.com/in/suchit-ashar-132207192/"
+LINKEDIN_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/>'
+                '<path fill="#fff" d="M6.9 9.6h2.6v8.3H6.9zM8.2 5.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM11.1 9.6h2.5v1.1h.04'
+                'c.35-.66 1.2-1.36 2.47-1.36 2.64 0 3.13 1.74 3.13 4v4.55h-2.6v-4.03c0-.96-.02-2.2-1.34-2.2-1.34 0-1.55 1.05'
+                '-1.55 2.13v4.1h-2.6z"/></svg>')
 
 
 def _data_uri(svg_text: str) -> str:
@@ -136,6 +142,11 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
 .tb{{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}}
 .tb-title{{font-size:1.45rem;font-weight:700;color:{NAVY}}}
 .tb-tag{{color:#334155;font-size:.92rem;font-weight:500;border-left:1px solid {LINE};padding-left:.8rem}}
+.tb-dev{{display:inline-flex;align-items:center;gap:.35rem;color:{MUTED};font-size:.86rem;border-left:1px solid {LINE};
+  padding-left:.8rem;white-space:nowrap}}
+.tb-dev a{{display:inline-flex;align-items:center;gap:.35rem;color:{NAVY};font-weight:600;text-decoration:none}}
+.tb-dev a:hover{{color:#0A66C2;text-decoration:underline}}
+.tb-dev svg{{width:16px;height:16px;flex:none}}
 .tb-upd{{color:#334155;font-size:.85rem;text-align:right;margin-top:.35rem;padding:.3rem .6rem;border-radius:8px;
   background:rgba(255,255,255,.82);float:right}}
 .ov-h{{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .1rem;border-left:4px solid {BLUE};padding-left:.8rem}}
@@ -601,7 +612,9 @@ st.session_state["_last_page"] = page
 t1, t2, t3, t4 = st.columns([3.6, 1.7, 1.8, 2.3])
 with t1:
     st.markdown(f'<div class="tb"><span class="tb-title">{BRAND}</span><span class="tb-tag">Macroeconomic intelligence '
-                'for investors and businesses</span></div>', unsafe_allow_html=True)
+                f'for investors and businesses</span><span class="tb-dev">Developed by '
+                f'<a href="{LINKEDIN_URL}" target="_blank" rel="noopener">{LINKEDIN_SVG}Suchit Ashar</a></span></div>',
+                unsafe_allow_html=True)
 with t2:
     country = st.selectbox("Country", COUNTRY_LIST, key="country_pick", label_visibility="collapsed")
 with t3:
@@ -1719,10 +1732,5 @@ elif page == "Compare":
 else:
     data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
-LINKEDIN_URL = "https://www.linkedin.com/in/suchit-ashar-132207192/"
-st.markdown(
-    f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/>'
-    '<path fill="#fff" d="M6.9 9.6h2.6v8.3H6.9zM8.2 5.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM11.1 9.6h2.5v1.1h.04'
-    'c.35-.66 1.2-1.36 2.47-1.36 2.64 0 3.13 1.74 3.13 4v4.55h-2.6v-4.03c0-.96-.02-2.2-1.34-2.2-1.34 0-1.55 1.05'
-    '-1.55 2.13v4.1h-2.6z"/></svg>Suchit Ashar</a></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
+            f'{LINKEDIN_SVG}Suchit Ashar</a></div>', unsafe_allow_html=True)
