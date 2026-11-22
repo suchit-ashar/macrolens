@@ -264,7 +264,9 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 @media (max-width:1280px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 @media (max-width:640px){{.kpi-grid{{grid-template-columns:minmax(0,1fr)}} .block-container{{padding-left:1rem;padding-right:1rem}}
   .kt td,.kt th{{white-space:nowrap}} .tk{{grid-template-columns:28px minmax(0,1fr)}} .tk-t{{grid-column:2}}
-  .chips{{border-left:none;padding-left:0}}}}
+  .chips{{border-left:none;padding-left:0}}
+  .drv{{grid-template-columns:repeat(2,minmax(0,1fr))}} .drv > div,.drv > div:first-child{{border-left:none;padding:.2rem .4rem}}}}
+.drv b{{overflow-wrap:normal;word-break:normal;hyphens:none}}
 .kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
 div[class*="st-key-bsec_"] table,.st-key-bexec table,.st-key-brief table{{display:block;max-width:100%;overflow-x:auto;
   -webkit-overflow-scrolling:touch}}
