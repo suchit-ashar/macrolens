@@ -8,6 +8,7 @@ Run:  streamlit run app/app.py
 A country selector drives the page: India, United States, Euro area, China, Japan, Compare.
 Charts and cards skip series that are missing, so a failed fetch never breaks the page.
 """
+import re
 import sys
 from datetime import date, timedelta, timezone
 from pathlib import Path
@@ -1404,9 +1405,6 @@ def briefing_text(file: str) -> str | None:
     return p.read_text(encoding="utf-8-sig") if p.exists() else None
 
 
-BRIEF_NOTE = ("AI-generated each morning at about 08:40 IST from web searches of public sources (central banks, "
-              "exchanges, statistical agencies, major financial news). It can contain errors: check the cited sources "
-              "before acting on anything. Not investment advice.")
 
 
 def briefing_card():
@@ -1449,9 +1447,8 @@ def briefing_page():
         st.warning("This briefing could not be loaded right now. Try again in a minute.")
         return
     b = bf.split_briefing(text)
-    if b.cutoff:
-        c2.caption(b.cutoff)
-    st.markdown(f'<div class="ml-cap">ⓘ {BRIEF_NOTE}</div>', unsafe_allow_html=True)
+    if b.cutoff:  # the file says "Data cut-off: ..."; the page shows it as "As of ..."
+        c2.caption(re.sub(r"data cut-?off(\s+timestamp)?\s*:?", "As of", b.cutoff, flags=re.IGNORECASE))
 
     # Market snapshot from MacroLens's own feeds (not from the AI text), so the headline numbers are verified data.
     kpi_row([kpi("yield", "US 10Y Treasury", "Yield, constant maturity (FRED)", "us_10y", how="bp",
