@@ -611,8 +611,8 @@ st.session_state["_last_page"] = page
 
 t1, t2, t3, t4 = st.columns([3.6, 1.7, 1.8, 2.3])
 with t1:
-    st.markdown(f'<div class="tb"><span class="tb-title">{BRAND}</span><span class="tb-tag">Macroeconomic intelligence '
-                f'for investors and businesses</span><span class="tb-dev">Developed by '
+    st.markdown(f'<div class="tb"><span class="tb-title">{BRAND}</span><span class="tb-tag">Macroeconomic intelligence: '
+                f'your daily edge on markets and the economy</span><span class="tb-dev">Developed by '
                 f'<a href="{LINKEDIN_URL}" target="_blank" rel="noopener">{LINKEDIN_SVG}Suchit Ashar</a></span></div>',
                 unsafe_allow_html=True)
 with t2:
