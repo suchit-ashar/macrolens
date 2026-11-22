@@ -94,6 +94,13 @@ section[data-testid="stSidebar"] [role="radiogroup"] label p{{font-size:1rem;col
 .kt a{{color:{NAVY};text-decoration:none;border-bottom:1px dotted {MUTED}}}
 .note{{background:#EEF4FB;border:1px solid #D6E4F5;border-radius:12px;padding:.8rem 1rem;color:{NAVY};margin:1rem 0}}
 .note b{{margin-right:.6rem}}
+.st-key-brief{{padding:.6rem 1.2rem}}
+.st-key-brief h1{{font-size:1.55rem !important;color:{NAVY};padding-top:.2rem}}
+.st-key-brief h2{{font-size:1.15rem !important;color:{NAVY};border-bottom:1px solid {LINE};padding:.9rem 0 .3rem;margin-top:.6rem}}
+.st-key-brief h3{{font-size:1rem !important;color:{NAVY}}}
+.st-key-brief p,.st-key-brief li{{font-size:.95rem;line-height:1.6}}
+.st-key-brief blockquote{{background:#EEF4FB;border-left:3px solid #1D4ED8;border-radius:0;padding:.4rem .8rem;margin:.6rem 0}}
+.st-key-brief table{{font-size:.88rem}}
 @media (max-width:1100px){{.kpi-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
 .ml-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}}
 .ml-brand{{font-size:1.9rem;font-weight:700;color:{NAVY};letter-spacing:-.01em}}
@@ -1331,7 +1338,7 @@ def briefing_page():
     if text is None:
         st.warning("This briefing could not be loaded right now. Try again in a minute.")
         return
-    with st.container(border=True):
+    with st.container(border=True, key="brief"):
         st.markdown(text)  # rendered as plain markdown; raw HTML in the file is not executed
 
 
