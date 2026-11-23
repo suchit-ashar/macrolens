@@ -53,6 +53,10 @@ COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C
 SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED", "#0F766E", "#B45309"]
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 BLUE = "#2563EB"
+# Required by the FRED API Terms of Use (https://fred.stlouisfed.org/docs/api/terms_of_use.html)
+FRED_NOTICE = ('This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. '
+               '<a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener">FRED® API '
+               'Terms of Use</a>.')
 # Owner credit ("Developed by …"), shown in the top bar and the footer
 LINKEDIN_URL = "https://www.linkedin.com/in/suchit-ashar-132207192/"
 LINKEDIN_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/>'
@@ -287,6 +291,8 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 .drv b{{overflow-wrap:normal;word-break:normal;hyphens:none}}
 .kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
 .site-disclaimer{{text-align:center;color:{MUTED};font-size:.8rem;margin-top:1.2rem}}
+.site-credit{{text-align:center;color:{MUTED};font-size:.72rem;margin-top:.3rem;line-height:1.4}}
+.site-credit a{{color:{MUTED}}}
 .site-foot{{border-top:1px solid {LINE};margin-top:.6rem;padding:1rem 0 .4rem;color:{MUTED};font-size:.88rem;
   display:flex;justify-content:center;align-items:center;flex-wrap:wrap}}
 .site-foot a{{display:inline-flex;align-items:center;gap:.4rem;color:{NAVY};font-weight:600;text-decoration:none;margin-left:.25rem}}
@@ -1809,6 +1815,7 @@ def briefing_page():
 
 def data_sources_page():
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="note"><b>FRED®</b>{FRED_NOTICE}</div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
                 "US Treasury, FRED, IMF and the World Bank, fetched automatically twice a day, at about 04:30 and 19:00 IST. FBIL market data "
                 "(bond yields, T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come "
@@ -1844,6 +1851,7 @@ elif page == "Compare":
 else:
     data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
-st.markdown('<div class="site-disclaimer">Information only, not investment advice; AI-assisted.</div>'
+st.markdown(f'<div class="site-disclaimer">Information only, not investment advice; AI-assisted.</div>'
+            f'<div class="site-credit">{FRED_NOTICE}</div>'
             f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
             f'{LINKEDIN_SVG}Suchit Ashar</a></div>', unsafe_allow_html=True)
