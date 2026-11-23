@@ -1017,26 +1017,6 @@
   note: Benchmark for euro area government bonds.
   source_url: https://fred.stlouisfed.org/series/IRLTLT01DEM156N
 
-- id: usd_eur
-  country: EA
-  topic: currency
-  name: US dollars per euro (EUR/USD)
-  source: FRED
-  source_series: DEXUSEU
-  unit: usd_per_eur
-  frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DEXUSEU
-
-- id: cny_usd
-  country: CN
-  topic: currency
-  name: Chinese yuan per US dollar (USD/CNY)
-  source: FRED
-  source_series: DEXCHUS
-  unit: cny
-  frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DEXCHUS
-
 # ============================== TRADE (Ministry of Commerce) ==============================
 # Monthly release on PIB (Table 1, US$ billion). Each release gives the latest month and restates
 # the same month a year earlier; the newest release wins. Balances = exports - imports (the printed
@@ -1623,16 +1603,6 @@
   unit: percent
   frequency: monthly
   source_url: https://fred.stlouisfed.org/series/IR3TIB01JPM156N
-
-- id: usd_jpy
-  country: JP
-  topic: currency
-  name: Japanese yen per US dollar (USD/JPY)
-  source: FRED
-  source_series: DEXJPUS
-  unit: jpy
-  frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DEXJPUS
 
 - id: jp_unemployment
   country: JP
