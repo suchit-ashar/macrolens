@@ -120,6 +120,38 @@ def test_dashboard_price_missing_or_implausible():
     assert dashboard_price("| Brent | $9229/bbl | | | |", "Brent", 20, 250) is None
 
 
+from analytics.briefing import take_market_rows  # noqa: E402
+
+SCORE = """Intro text.
+
+| Sector | Market | Performance (1D/1W) | In the news? | Why (driver with source/date) |
+|---|---|---:|---|---|
+| Bank | India | Data unavailable | Yes | Financial shares led; Reuters, 23 Nov |
+| IT | India | Data unavailable | No verified catalyst | Data unavailable |
+| Technology | US | -7.27% / Data unavailable | Yes | AI losses; 20 Nov |
+
+Closing note."""
+
+
+def test_take_india_rows_keeps_us():
+    news, rest = take_market_rows(SCORE, "India")
+    assert news == {"bank": ("Yes", "Financial shares led; Reuters, 23 Nov"),
+                    "it": ("No verified catalyst", "Data unavailable")}
+    assert "| Technology | US |" in rest and "| Bank |" not in rest
+    assert rest.startswith("Intro text.") and rest.endswith("Closing note.")
+
+
+def test_table_left_empty_is_removed():
+    only_india = "\n".join(SCORE.splitlines()[:6]) + "\n"
+    news, rest = take_market_rows(only_india, "India")
+    assert set(news) == {"bank", "it"} and "|" not in rest
+
+
+def test_no_market_column_unchanged():
+    body = "| Sector | 1D |\n|---|---|\n| Bank | +2.49% |"
+    assert take_market_rows(body, "India") == ({}, body)
+
+
 def test_icons():
     assert icon_for("India ↔ Global Linkages") == "link"
     assert icon_for("Indian Markets") == "bank"

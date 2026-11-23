@@ -858,6 +858,97 @@
   note: Expected volatility of the Nifty 50 over the next 30 days, from option prices. Higher means more fear.
   source_url: https://www.nseindia.com/reports-indices-historical-index-data
 
+# NSE sector indices for the briefing's Sector Scorecard (Nifty Bank and Nifty IT are above).
+- id: in_nifty_finserv
+  country: IN
+  topic: markets
+  name: Nifty Financial Services, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Financial Services"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_auto
+  country: IN
+  topic: markets
+  name: Nifty Auto, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Auto"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_pharma
+  country: IN
+  topic: markets
+  name: Nifty Pharma, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Pharma"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_fmcg
+  country: IN
+  topic: markets
+  name: Nifty FMCG, closing value (NSE)
+  source: NSE
+  source_series: "Nifty FMCG"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_metal
+  country: IN
+  topic: markets
+  name: Nifty Metal, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Metal"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_realty
+  country: IN
+  topic: markets
+  name: Nifty Realty, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Realty"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_energy
+  country: IN
+  topic: markets
+  name: Nifty Energy, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Energy"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_psubank
+  country: IN
+  topic: markets
+  name: Nifty PSU Bank, closing value (NSE)
+  source: NSE
+  source_series: "Nifty PSU Bank"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_nifty_media
+  country: IN
+  topic: markets
+  name: Nifty Media, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Media"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
 # ============================== EXTERNAL ==============================
 # World Bank annual series (1 January of the year). Higher-frequency RBI data (weekly forex
 # reserves, quarterly BoP) to be added once the sources are confirmed.

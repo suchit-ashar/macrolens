@@ -190,6 +190,12 @@ section[data-testid="stSidebar"] .stButton button:hover{{background:rgba(255,255
 .chg{{display:inline-block;min-width:3.9rem;text-align:right;border-radius:6px;padding:1px 6px;font-weight:600}}
 .chg.up{{background:#DCFCE7;color:#15803D}} .chg.down{{background:#FEE2E2;color:#B91C1C}} .chg.na{{color:{MUTED}}}
 .bnote{{color:{MUTED};font-size:.72rem;margin-top:.5rem;line-height:1.4}}
+.bt.sc{{margin:.2rem 0 .4rem}} .bt.sc td{{vertical-align:top}}
+.bt.sc td.sn,.bt.sc td.sw{{white-space:normal;color:#475569;font-size:.8rem;line-height:1.4}}
+.bt.sc td.sn{{min-width:5.5rem}} .bt.sc td.sw{{min-width:14rem}}
+.rk{{display:inline-block;font-size:.66rem;font-weight:600;border-radius:999px;padding:0 6px;margin-left:.3rem;
+  vertical-align:1px}}
+.rk.up{{background:#DCFCE7;color:#166534}} .rk.down{{background:#FEE2E2;color:#991B1B}}
 .bnote a,.tk-t a,.drv a{{color:{MUTED}}}
 .chips{{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;min-height:2.5rem;padding-left:1rem;
   border-left:1px solid {LINE}}}
@@ -276,6 +282,7 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
 @media (max-width:640px){{.kpi-grid{{grid-template-columns:minmax(0,1fr)}} .block-container{{padding-left:1rem;padding-right:1rem}}
   .kt td,.kt th{{white-space:nowrap}} .tk{{grid-template-columns:28px minmax(0,1fr)}} .tk-t{{grid-column:2}}
   .chips{{border-left:none;padding-left:0}}
+  .bt.sc td:first-child{{white-space:normal;min-width:7.5rem}} .bt.sc .rk{{margin-left:0}}
   .drv{{grid-template-columns:repeat(2,minmax(0,1fr))}} .drv > div,.drv > div:first-child{{border-left:none;padding:.2rem .4rem}}}}
 .drv b{{overflow-wrap:normal;word-break:normal;hyphens:none}}
 .kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
@@ -1588,6 +1595,46 @@ def brent_card(b: "bf.Briefing", briefing_day: str) -> str:
             f'<div class="kpi-f">{when}</div>{official}</div>')
 
 
+INDIA_SECTORS = [("Bank", "in_niftybank"), ("IT", "in_niftyit"), ("Financial Services", "in_nifty_finserv"),
+                 ("Auto", "in_nifty_auto"), ("Pharma", "in_nifty_pharma"), ("FMCG", "in_nifty_fmcg"),
+                 ("Metal", "in_nifty_metal"), ("Realty", "in_nifty_realty"), ("Energy", "in_nifty_energy"),
+                 ("PSU Bank", "in_nifty_psubank"), ("Media", "in_nifty_media")]
+
+
+def india_sector_html(news: dict[str, tuple[str, str]]) -> str | None:
+    """India Sector Scorecard from NSE closes (1D = vs previous session, 1W = vs five sessions earlier),
+    sorted best to worst, with the AI briefing's news notes matched by sector name."""
+    rows, last_dates = [], []
+    for name, iid in INDIA_SECTORS:
+        d = get(iid).dropna()
+        if len(d) < 2:
+            continue
+        v = d["value"].astype(float).tolist()
+        one_d = (v[-1] / v[-2] - 1) * 100
+        one_w = (v[-1] / v[-6] - 1) * 100 if len(v) >= 6 else None
+        n = news.get(name.lower()) or news.get(f"nifty {name.lower()}") or ("", "")
+        rows.append((name, one_d, one_w, n))
+        last_dates.append(d["date"].iloc[-1])
+    if not rows:
+        return None
+    rows.sort(key=lambda r: r[1], reverse=True)
+    top, bottom = {r[0] for r in rows[:3]}, {r[0] for r in rows[-3:]}
+    body = []
+    for name, one_d, one_w, (in_news, why) in rows:
+        tag = ('<span class="rk up">Top 3</span>' if name in top else
+               '<span class="rk down">Bottom 3</span>' if name in bottom else "")
+        why_txt = "" if why.strip().lower() in ("", "data unavailable") else bf.md_inline(why)
+        news_txt = bf.md_inline(in_news) if in_news.strip().lower() not in ("", "data unavailable") else ""
+        body.append(f'<tr><td>Nifty {html_escape(name)} {tag}</td><td class="r">{chg_pill(f"{one_d:+.2f}%")}</td>'
+                    f'<td class="r">{chg_pill(f"{one_w:+.2f}%") if one_w is not None else "–"}</td>'
+                    f'<td class="sn">{news_txt}</td><td class="sw">{why_txt}</td></tr>')
+    last = max(last_dates)
+    return (f'<table class="bt sc"><tr><th>Sector (NSE)</th><th class="r">1D</th><th class="r">1W</th>'
+            f'<th>In the news?</th><th>Why</th></tr>{"".join(body)}</table>'
+            f'<div class="bnote">India: NSE official closing values, as of {last:%A, %d %B %Y} (1W = last five sessions), '
+            f'fetched by MacroLens. News notes: AI briefing.</div>')
+
+
 NSE_TABLE = [("Nifty 50", "in_nifty50"), ("Nifty Bank", "in_niftybank"), ("Nifty IT", "in_niftyit"),
              ("Nifty Midcap 100", "in_niftymidcap100"), ("India VIX", "in_indiavix")]
 
@@ -1745,6 +1792,15 @@ def briefing_page():
             with col:
                 bsection(f"bsec_pair{i}", h, body)
     for i, (h, body) in enumerate(b.sections):
+        if bf.norm(h).startswith("sector scorecard"):
+            news, rest = bf.take_market_rows(body, "India")
+            india = india_sector_html(news)
+            if india:  # India numbers from NSE; the AI's US rows and any notes follow
+                with st.container(border=True, key=f"bsec_{i}"):
+                    st.markdown(f'<div class="bh">{svg("gdp")}{html_escape(h)}</div>{india}', unsafe_allow_html=True)
+                    if rest:
+                        st.markdown(rest if news else body)
+                continue
         bsection(f"bsec_{i}", h, body)
     if b.notes:
         st.caption(b.notes)

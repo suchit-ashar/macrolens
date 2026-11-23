@@ -137,6 +137,49 @@ def dashboard_price(body: str, name: str, lo: float, hi: float) -> dict | None:
     return None
 
 
+def _cells(line: str) -> list[str]:
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def take_market_rows(body: str, market: str) -> tuple[dict[str, tuple[str, str]], str]:
+    """From a scorecard table with Sector / Market / ... / In the news? / Why columns, pull out the rows
+    for one market. Returns ({sector name (lower case): (in the news, why)}, the section without those rows).
+    If the table has no Market column the section is returned unchanged."""
+    lines = body.splitlines()
+    news: dict[str, tuple[str, str]] = {}
+    keep: list[str] = []
+    cols: list[str] | None = None
+    for line in lines:
+        if line.strip().startswith("|"):
+            cells = _cells(line)
+            low = [c.lower() for c in cells]
+            if "sector" in low and "market" in low:
+                cols = low
+                keep.append(line)
+                continue
+            if cols and not re.match(r"^:?-{2,}", cells[0]) and len(cells) >= len(cols) - 1:
+                row = dict(zip(cols, cells))
+                if row.get("market", "").lower() == market.lower():
+                    news_col = next((c for c in cols if c.startswith("in the news")), None)
+                    why_col = next((c for c in cols if c.startswith("why")), None)
+                    news[row.get("sector", "").lower()] = (row.get(news_col, "") if news_col else "",
+                                                          row.get(why_col, "") if why_col else "")
+                    continue
+        else:
+            cols = None if line.strip() else cols
+        keep.append(line)
+    # drop a table left with only its header and separator
+    out, i = [], 0
+    while i < len(keep):
+        if (i + 1 < len(keep) and keep[i].strip().startswith("|") and re.match(r"^\|?\s*:?-{2,}", keep[i + 1].strip())
+                and (i + 2 >= len(keep) or not keep[i + 2].strip().startswith("|"))):
+            i += 2
+            continue
+        out.append(keep[i])
+        i += 1
+    return news, "\n".join(out).strip()
+
+
 def md_inline(text: str) -> str:
     """Escape text for HTML, keeping **bold**, *italic* and [links](https://...) from the Markdown."""
     from html import escape
