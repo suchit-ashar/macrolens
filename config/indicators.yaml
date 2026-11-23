@@ -722,57 +722,70 @@
   source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_real_yield_curve
 
 # ============================== CURRENCY ==============================
-# FBIL reference rates (public data lags about a week).
+# Rupee rates derived from the ECB euro reference rates (free reuse with the ECB cited as source).
+# Switched from FBIL on 23 Nov 2026: FBIL requires authorisation and a licence fee to display its rates.
 - id: inr_usd
   country: IN
   topic: currency
-  name: INR per USD, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 1 USD"
+  name: INR per USD (derived from ECB reference rates)
+  source: ECB
+  source_series: "USD:1"
   unit: inr_per_usd
   frequency: daily
-  source_url: https://www.fbil.org.in/
+  note: Rupees per US dollar = ECB rupees per euro / US dollars per euro, at 2:15 pm CET.
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: inr_eur
   country: IN
   topic: currency
-  name: INR per EUR, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 1 EUR"
+  name: INR per EUR, ECB reference rate
+  source: ECB
+  source_series: "EUR:1"
   unit: inr
   frequency: daily
-  source_url: https://www.fbil.org.in/
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: inr_gbp
   country: IN
   topic: currency
-  name: INR per GBP, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 1 GBP"
+  name: INR per GBP (derived from ECB reference rates)
+  source: ECB
+  source_series: "GBP:1"
   unit: inr
   frequency: daily
-  source_url: https://www.fbil.org.in/
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: inr_jpy100
   country: IN
   topic: currency
-  name: INR per 100 JPY, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 100 JPY"
+  name: INR per 100 JPY (derived from ECB reference rates)
+  source: ECB
+  source_series: "JPY:100"
   unit: inr
   frequency: daily
-  source_url: https://www.fbil.org.in/
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
+
+- id: inr_cny
+  country: IN
+  topic: currency
+  name: INR per CNY (derived from ECB reference rates)
+  source: ECB
+  source_series: "CNY:1"
+  unit: inr
+  frequency: daily
+  note: China is India's largest trading partner.
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: inr_aed
   country: IN
   topic: currency
-  name: INR per AED, FBIL reference rate
-  source: FBIL
-  source_series: "refrates:INR / 1 AED"
+  name: INR per AED (derived from ECB reference rates and the AED peg)
+  source: ECB
+  source_series: "AED:1"
   unit: inr
   frequency: daily
-  note: UAE is a major source of remittances and trade for India.
-  source_url: https://www.fbil.org.in/
+  note: UAE dirham is pegged at 3.6725 per US dollar. UAE is a major source of remittances and trade for India.
+  source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: us_dollar_broad
   country: US
