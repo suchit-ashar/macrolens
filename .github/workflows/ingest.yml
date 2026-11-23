@@ -2,8 +2,14 @@ name: Daily data ingestion
 
 on:
   schedule:
-    - cron: "0 23 * * *"    # 23:00 UTC = 04:30 IST (next day), every day
+    - cron: "0 23 * * *"    # 23:00 UTC = 04:30 IST (next day): main daily update, before the 08:40 briefing
+    - cron: "30 13 * * *"   # 13:30 UTC = 19:00 IST: picks up same-day rupee (FBIL ~13:30) and gold (IBJA closing)
   workflow_dispatch:         # adds a "Run workflow" button for manual runs
+
+# GitHub can start scheduled runs hours late; never let two runs overlap (they would race to push).
+concurrency:
+  group: ingest
+  cancel-in-progress: false
 
 permissions:
   contents: write            # to commit updated data

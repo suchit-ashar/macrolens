@@ -1698,7 +1698,7 @@ def briefing_page():
 def data_sources_page():
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
-                "US Treasury, FRED, IMF and the World Bank, fetched automatically every morning at about 04:30 IST. FBIL market data "
+                "US Treasury, FRED, IMF and the World Bank, fetched automatically twice a day, at about 04:30 and 19:00 IST. FBIL market data "
                 "(bond yields, T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come "
                 "from the RBI home page. Derived values (YoY %, spreads, shares, real rate) are computed by MacroLens and "
                 "labelled. IMF projections and budget estimates are kept as separate, labelled series.")
