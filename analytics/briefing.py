@@ -111,6 +111,32 @@ def lead_table(body: str) -> tuple[list[list[str]], str, str]:
     return rows, note, "\n".join(lines[i:]).strip()
 
 
+_MONTHS = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+
+
+def dashboard_price(body: str, name: str, lo: float, hi: float) -> dict | None:
+    """A US$ price from the Analyst Dashboard table row whose first cell is `name`, e.g.
+    '| Brent | $92.29/bbl (23 Nov) | -0.30% | Down | ... |' -> {"value": 92.29, "change": -0.3, "day": 23, "month": 11}.
+    Returns None when the row is missing, says N/A, or the number is outside [lo, hi]."""
+    for line in body.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or cells[0].lower().strip("* ") != name.lower():
+            continue
+        m = re.search(r"\$\s?([0-9]{1,4}(?:,[0-9]{3})*(?:\.[0-9]+)?)", cells[1])
+        if not m:
+            return None
+        value = float(m.group(1).replace(",", ""))
+        if not lo <= value <= hi:
+            return None
+        out = {"value": value, "change": None, "day": None, "month": None}
+        if len(cells) > 2 and (c := re.search(r"([+\-−]\s?[0-9]+(?:\.[0-9]+)?)\s?%", cells[2])):
+            out["change"] = float(c.group(1).replace("−", "-").replace(" ", ""))
+        if (d := re.search(r"\((\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?\)", cells[1])) and d.group(2).lower() in _MONTHS:
+            out["day"], out["month"] = int(d.group(1)), _MONTHS[d.group(2).lower()]
+        return out
+    return None
+
+
 def md_inline(text: str) -> str:
     """Escape text for HTML, keeping **bold**, *italic* and [links](https://...) from the Markdown."""
     from html import escape

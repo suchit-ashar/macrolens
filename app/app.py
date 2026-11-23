@@ -1561,6 +1561,33 @@ def market_table(title: str, icon_html: str, sub: str, rows: list[list[str]], no
             + (f'<div class="bnote">{bf.md_inline(note)}</div>' if note else "") + '</div>')
 
 
+def brent_card(b: "bf.Briefing", briefing_day: str) -> str:
+    """Brent card from the briefing's Analyst Dashboard (daily, AI-collected from market reports), with the
+    official EIA spot shown underneath. Falls back to the EIA card when the briefing has no usable price."""
+    dash = next((body for h, body in b.sections if bf.norm(h).startswith("analyst dashboard")), "")
+    p = bf.dashboard_price(dash, "Brent", 20, 250)
+    if p is None:
+        return kpi("drop", "Brent crude", "US$ per barrel, EIA spot · updated weekly", "brent", how="pct")
+    bday = pd.Timestamp(briefing_day)
+    when = f"via {bday:%d %b %Y} briefing"
+    if p["day"]:
+        d = pd.Timestamp(year=bday.year, month=p["month"], day=p["day"])
+        if d > bday + pd.Timedelta(days=1):  # a December price in a January briefing
+            d = d.replace(year=bday.year - 1)
+        when = f"{d:%d %b %Y} · via briefing"
+    change = ""
+    if p["change"] is not None and p["change"] != 0:
+        change = (f'<span class="kpi-d" style="color:#64748B">{"▲" if p["change"] > 0 else "▼"} '
+                  f'{abs(p["change"]):.2f}%</span>')
+    eia = get("brent").dropna()
+    official = (f'<div class="kpi-f">Official EIA spot: ${float(eia["value"].iloc[-1]):,.2f} '
+                f'({eia["date"].iloc[-1]:%d %b}, weekly)</div>') if not eia.empty else ""
+    return (f'<div class="kpi"><div class="kpi-top">{svg("drop")}<div><div class="kpi-t">Brent crude</div>'
+            f'<div class="kpi-s">US$ per barrel · market price from the AI briefing</div></div></div>'
+            f'<div class="kpi-mid"><div><span class="kpi-v" style="color:{NAVY}">${p["value"]:,.2f}</span>{change}</div></div>'
+            f'<div class="kpi-f">{when}</div>{official}</div>')
+
+
 NSE_TABLE = [("Nifty 50", "in_nifty50"), ("Nifty Bank", "in_niftybank"), ("Nifty IT", "in_niftyit"),
              ("Nifty Midcap 100", "in_niftymidcap100"), ("India VIX", "in_indiavix")]
 
@@ -1629,15 +1656,17 @@ def briefing_page():
     elif as_of:  # the file says "Data cut-off: ..."; the page shows it as "As of ..."
         c2.caption(as_of)
 
-    # Market snapshot from MacroLens's own feeds (not from the AI text), so the headline numbers are verified data.
+    # Market snapshot: MacroLens's own official feeds, except Brent, whose daily price comes from the briefing
+    # (no free official daily Brent spot exists; the official weekly EIA spot is shown on that card too).
     kpi_row([kpi("yield", "US 10Y Treasury", "Par yield (US Treasury)", "us_10y", how="bp",
                  signal=sg.yield_move(get("us_10y"))),
-             kpi("drop", "Brent crude", "US$ per barrel, spot (FRED)", "brent", how="pct"),
+             brent_card(b, pick),
              kpi("fx", "Rupee", "₹ per US$ (FBIL reference)", "inr_usd", how="pct", good="down",
                  signal=sg.local_currency(get("inr_usd"))),
              kpi("gold", "Gold (24K)", "₹ per 10 g, IBJA closing rate", "in_gold", how="pct")])
-    st.markdown('<div class="bsnap">Snapshot: latest official data in MacroLens (dates on each card). '
-                'The briefing below is written separately by AI.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="bsnap">Snapshot: official data fetched by MacroLens (dates on each card); the Brent '
+                'market price comes from the AI briefing. The briefing below is written separately by AI.</div>',
+                unsafe_allow_html=True)
 
     execsum = b.take("executive summary")
     if execsum is None:  # unexpected format: show the file as it is

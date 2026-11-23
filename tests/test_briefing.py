@@ -97,6 +97,29 @@ def test_md_inline_escapes_html():
     assert 'href="javascript' not in out  # only http(s) links become anchors
 
 
+from analytics.briefing import dashboard_price  # noqa: E402
+
+DASH = """| Indicator | Latest | Change | Direction | Why it matters |
+|---|---:|---:|---|---|
+| Brent | $92.29/bbl (23 Nov) | -0.30% | Down | Import-cost relief |
+| Gold | N/A | N/A | N/A | x |"""
+
+
+def test_dashboard_price_with_date():
+    assert dashboard_price(DASH, "Brent", 20, 250) == {"value": 92.29, "change": -0.3, "day": 23, "month": 11}
+
+
+def test_dashboard_price_without_date_and_text_change():
+    p = dashboard_price("| Brent | $92.59/bbl | +0.66% vs 19 Nov | Up | x |", "Brent", 20, 250)
+    assert p["value"] == 92.59 and p["change"] == 0.66 and p["day"] is None
+
+
+def test_dashboard_price_missing_or_implausible():
+    assert dashboard_price(DASH, "Gold", 1, 10000) is None
+    assert dashboard_price(DASH, "WTI", 20, 250) is None
+    assert dashboard_price("| Brent | $9229/bbl | | | |", "Brent", 20, 250) is None
+
+
 def test_icons():
     assert icon_for("India ↔ Global Linkages") == "link"
     assert icon_for("Indian Markets") == "bank"
