@@ -55,6 +55,7 @@ RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 BLUE = "#2563EB"
 # Required by the FRED API Terms of Use (https://fred.stlouisfed.org/docs/api/terms_of_use.html)
 FRED_NOTICE = ('This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. '
+               'By using this site you agree to be bound by the '
                '<a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener">FRED® API '
                'Terms of Use</a>.')
 # Owner credit ("Developed by …"), shown in the top bar and the footer
@@ -1815,7 +1816,7 @@ def briefing_page():
 
 def data_sources_page():
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="note"><b>FRED®</b>{FRED_NOTICE}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="note"><b>FRED®</b> {FRED_NOTICE}</div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
                 "US Treasury, FRED, IMF and the World Bank, fetched automatically twice a day, at about 04:30 and 19:00 IST. FBIL market data "
                 "(bond yields, T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come "
