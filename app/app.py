@@ -286,7 +286,8 @@ div[class*="st-key-bsec_"] table{{font-size:.86rem}}
   .drv{{grid-template-columns:repeat(2,minmax(0,1fr))}} .drv > div,.drv > div:first-child{{border-left:none;padding:.2rem .4rem}}}}
 .drv b{{overflow-wrap:normal;word-break:normal;hyphens:none}}
 .kt-wrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
-.site-foot{{border-top:1px solid {LINE};margin-top:1.2rem;padding:1rem 0 .4rem;color:{MUTED};font-size:.88rem;
+.site-disclaimer{{text-align:center;color:{MUTED};font-size:.8rem;margin-top:1.2rem}}
+.site-foot{{border-top:1px solid {LINE};margin-top:.6rem;padding:1rem 0 .4rem;color:{MUTED};font-size:.88rem;
   display:flex;justify-content:center;align-items:center;flex-wrap:wrap}}
 .site-foot a{{display:inline-flex;align-items:center;gap:.4rem;color:{NAVY};font-weight:600;text-decoration:none;margin-left:.25rem}}
 .site-foot a:hover{{color:#0A66C2;text-decoration:underline}}
@@ -1843,5 +1844,6 @@ elif page == "Compare":
 else:
     data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
-st.markdown(f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
+st.markdown('<div class="site-disclaimer">Information only, not investment advice; AI-assisted.</div>'
+            f'<div class="site-foot">Developed by <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">'
             f'{LINKEDIN_SVG}Suchit Ashar</a></div>', unsafe_allow_html=True)
