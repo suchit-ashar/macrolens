@@ -805,6 +805,59 @@
   note: India Bullion and Jewellers Association PM (closing) rate, used by RBI to price Sovereign Gold Bonds. No rates on weekends and central-government holidays.
   source_url: https://ibjarates.com/
 
+# ============================== MARKETS ==============================
+# NSE official end-of-day index closes (one file per trading day, published in the evening).
+- id: in_nifty50
+  country: IN
+  topic: markets
+  name: Nifty 50, closing value (NSE)
+  source: NSE
+  source_series: "Nifty 50"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_niftybank
+  country: IN
+  topic: markets
+  name: Nifty Bank, closing value (NSE)
+  source: NSE
+  source_series: "Nifty Bank"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_niftyit
+  country: IN
+  topic: markets
+  name: Nifty IT, closing value (NSE)
+  source: NSE
+  source_series: "Nifty IT"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_niftymidcap100
+  country: IN
+  topic: markets
+  name: Nifty Midcap 100, closing value (NSE)
+  source: NSE
+  source_series: "NIFTY Midcap 100"
+  unit: index
+  frequency: daily
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
+- id: in_indiavix
+  country: IN
+  topic: markets
+  name: India VIX, closing value (NSE)
+  source: NSE
+  source_series: "India VIX"
+  unit: index
+  frequency: daily
+  note: Expected volatility of the Nifty 50 over the next 30 days, from option prices. Higher means more fear.
+  source_url: https://www.nseindia.com/reports-indices-historical-index-data
+
 # ============================== EXTERNAL ==============================
 # World Bank annual series (1 January of the year). Higher-frequency RBI data (weekly forex
 # reserves, quarterly BoP) to be added once the sources are confirmed.

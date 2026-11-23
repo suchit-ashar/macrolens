@@ -1561,6 +1561,29 @@ def market_table(title: str, icon_html: str, sub: str, rows: list[list[str]], no
             + (f'<div class="bnote">{bf.md_inline(note)}</div>' if note else "") + '</div>')
 
 
+NSE_TABLE = [("Nifty 50", "in_nifty50"), ("Nifty Bank", "in_niftybank"), ("Nifty IT", "in_niftyit"),
+             ("Nifty Midcap 100", "in_niftymidcap100"), ("India VIX", "in_indiavix")]
+
+
+def nse_table() -> tuple[list[list[str]], str] | None:
+    """Indian Markets rows from MacroLens's own NSE closes (verified), or None if not available."""
+    rows, dates = [], []
+    for name, iid in NSE_TABLE:
+        d = get(iid).dropna()
+        if len(d) < 2:
+            continue
+        cur, prev = float(d["value"].iloc[-1]), float(d["value"].iloc[-2])
+        rows.append([name, f"{cur:,.2f}", f"{(cur / prev - 1) * 100:+.2f}%" if prev else "N/A"])
+        dates.append(d["date"].iloc[-1])
+    if not rows:
+        return None
+    last = max(dates)
+    note = f"Close date: {last:%A, %d %B %Y}. Source: NSE official closing values, fetched by MacroLens."
+    if any(x != last for x in dates):
+        note += " Some indices are from an earlier session."
+    return rows, note
+
+
 def takeaways_html(rows: list[tuple[str, str]]) -> str:
     items = "".join(f'<div class="tk"><span class="tk-n">{i}</span><span class="tk-l">{bf.md_inline(lab) or "&nbsp;"}</span>'
                     f'<span class="tk-t">{bf.md_inline(txt)}</span></div>' for i, (lab, txt) in enumerate(rows, 1))
@@ -1631,6 +1654,9 @@ def briefing_page():
             if rows:
                 tables["global" if n.startswith("global") else "india"] = (rows, note)
                 b.sections[i] = (h, rest)
+    own = nse_table()  # Indian closes from NSE's official file beat the AI-collected table
+    if own:
+        tables["india"] = own
     lead, detail = bf.lead_bullets(execsum[1])
     events = b.take("what to watch", "today's key events", "key events")
 
