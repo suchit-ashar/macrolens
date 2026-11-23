@@ -6,7 +6,7 @@ Your morning market briefing, plus live macro data for India and the world's maj
 after each daily data commit).
 
 ## Status
-143 series, all fetched automatically every day at 07:00 IST (GitHub Actions), in the order
+143 series, all fetched automatically every day at 04:30 IST (GitHub Actions), in the order
 users consult them: policy rates, currency, bonds, liquidity, inflation, growth, external,
 fiscal, jobs, commodities. Coverage: India first, then US, euro area and China.
 
