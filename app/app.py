@@ -1607,7 +1607,7 @@ def briefing_page():
         c2.caption(as_of)
 
     # Market snapshot from MacroLens's own feeds (not from the AI text), so the headline numbers are verified data.
-    kpi_row([kpi("yield", "US 10Y Treasury", "Yield, constant maturity (FRED)", "us_10y", how="bp",
+    kpi_row([kpi("yield", "US 10Y Treasury", "Par yield (US Treasury)", "us_10y", how="bp",
                  signal=sg.yield_move(get("us_10y"))),
              kpi("drop", "Brent crude", "US$ per barrel, spot (FRED)", "brent", how="pct"),
              kpi("fx", "Rupee", "₹ per US$ (FBIL reference)", "inr_usd", how="pct", good="down",
@@ -1697,8 +1697,8 @@ def briefing_page():
 
 def data_sources_page():
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
-    st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, Union Budget, CGA, Ministry of Commerce, "
-                "FRED, IMF and the World Bank, fetched automatically every morning at about 04:30 IST. FBIL market data "
+    st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
+                "US Treasury, FRED, IMF and the World Bank, fetched automatically every morning at about 04:30 IST. FBIL market data "
                 "(bond yields, T-bills, MIBOR) reaches the public with about a one-week lag; the latest rupee rates come "
                 "from the RBI home page. Derived values (YoY %, spreads, shares, real rate) are computed by MacroLens and "
                 "labelled. IMF projections and budget estimates are kept as separate, labelled series.")

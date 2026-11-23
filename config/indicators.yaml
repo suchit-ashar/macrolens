@@ -679,45 +679,47 @@
   frequency: daily
   source_url: https://fred.stlouisfed.org/series/DTB3
 
+# US Treasury par yields come straight from the Treasury (FRED's DGS* series carry the same numbers a day later;
+# history before 23 Nov 2026 was loaded from FRED).
 - id: us_2y
   country: US
   topic: bonds
   name: US 2-year Treasury yield, %
-  source: FRED
-  source_series: DGS2
+  source: US Treasury
+  source_series: "nominal:2 Yr"
   unit: percent
   frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DGS2
+  source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve
 
 - id: us_10y
   country: US
   topic: bonds
   name: US 10-year Treasury yield, %
-  source: FRED
-  source_series: DGS10
+  source: US Treasury
+  source_series: "nominal:10 Yr"
   unit: percent
   frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DGS10
+  source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve
 
 - id: us_30y
   country: US
   topic: bonds
   name: US 30-year Treasury yield, %
-  source: FRED
-  source_series: DGS30
+  source: US Treasury
+  source_series: "nominal:30 Yr"
   unit: percent
   frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DGS30
+  source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve
 
 - id: us_10y_real
   country: US
   topic: bonds
   name: US 10-year real yield (TIPS), %
-  source: FRED
-  source_series: DFII10
+  source: US Treasury
+  source_series: "real:10 YR"
   unit: percent
   frequency: daily
-  source_url: https://fred.stlouisfed.org/series/DFII10
+  source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_real_yield_curve
 
 # ============================== CURRENCY ==============================
 # FBIL reference rates (public data lags about a week).
