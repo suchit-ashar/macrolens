@@ -722,69 +722,27 @@
   source_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_real_yield_curve
 
 # ============================== CURRENCY ==============================
-# Rupee rates derived from the ECB euro reference rates (free reuse with the ECB cited as source).
-# Switched from FBIL on 23 Nov 2026: FBIL requires authorisation and a licence fee to display its rates.
+# Only rates a source publishes directly (no cross rates calculated by MacroLens).
 - id: inr_usd
   country: IN
   topic: currency
-  name: INR per USD (derived from ECB reference rates)
-  source: ECB
-  source_series: "USD:1"
+  name: INR per USD (US Federal Reserve, H.10)
+  source: FRED
+  source_series: DEXINUS
   unit: inr_per_usd
   frequency: daily
-  note: Rupees per US dollar = ECB rupees per euro / US dollars per euro, at 2:15 pm CET.
-  source_url: https://data.ecb.europa.eu/data/datasets/EXR
+  note: Noon buying rate in New York, published by the US Federal Reserve (H.10) about one working day later.
+  source_url: https://fred.stlouisfed.org/series/DEXINUS
 
 - id: inr_eur
   country: IN
   topic: currency
   name: INR per EUR, ECB reference rate
   source: ECB
-  source_series: "EUR:1"
+  source_series: INR
   unit: inr
   frequency: daily
-  source_url: https://data.ecb.europa.eu/data/datasets/EXR
-
-- id: inr_gbp
-  country: IN
-  topic: currency
-  name: INR per GBP (derived from ECB reference rates)
-  source: ECB
-  source_series: "GBP:1"
-  unit: inr
-  frequency: daily
-  source_url: https://data.ecb.europa.eu/data/datasets/EXR
-
-- id: inr_jpy100
-  country: IN
-  topic: currency
-  name: INR per 100 JPY (derived from ECB reference rates)
-  source: ECB
-  source_series: "JPY:100"
-  unit: inr
-  frequency: daily
-  source_url: https://data.ecb.europa.eu/data/datasets/EXR
-
-- id: inr_cny
-  country: IN
-  topic: currency
-  name: INR per CNY (derived from ECB reference rates)
-  source: ECB
-  source_series: "CNY:1"
-  unit: inr
-  frequency: daily
-  note: China is India's largest trading partner.
-  source_url: https://data.ecb.europa.eu/data/datasets/EXR
-
-- id: inr_aed
-  country: IN
-  topic: currency
-  name: INR per AED (derived from ECB reference rates and the AED peg)
-  source: ECB
-  source_series: "AED:1"
-  unit: inr
-  frequency: daily
-  note: UAE dirham is pegged at 3.6725 per US dollar. UAE is a major source of remittances and trade for India.
+  note: Euro foreign exchange reference rate published by the European Central Bank (2:15 pm CET). Source - ECB statistics.
   source_url: https://data.ecb.europa.eu/data/datasets/EXR
 
 - id: us_dollar_broad

@@ -663,8 +663,7 @@ def india():
                card("in_crr", "CRR", "rates")])
         section("currency")
         cards([card("inr_usd", "₹ per US$", "currency", good="down", signal=rupee),
-               card("inr_eur", "₹ per €", "currency", good="down"), card("inr_gbp", "₹ per £", "currency", good="down"),
-               card("inr_jpy100", "₹ per 100 ¥", "currency", good="down")])
+               card("inr_eur", "₹ per €", "currency", good="down")])
         section("bonds")
         cards([card("in_10y", "10Y G-sec yield", "bonds", signal=sg.yield_move(get("in_10y"))),
                card("in_gsec_2y", "2Y G-sec yield", "bonds"), card("in_tbill_91d", "91-day T-bill", "bonds"),
@@ -714,14 +713,10 @@ def india():
     with tabs[2]:
         section("currency")
         pair(lambda: chart("Rupee per US dollar", [line("inr_usd", "₹ per US$", "#7C3AED")], "₹ per US$", ("inr_usd",),
-                           note="Higher = weaker rupee. Derived from ECB euro reference rates (2:15 pm CET); "
-                                "source: European Central Bank."),
-             lambda: chart("Rupee vs euro, pound, yen, yuan, dirham",
-                           [line("inr_eur", "₹ per €", NAVY), line("inr_gbp", "₹ per £", SAFFRON),
-                            line("inr_jpy100", "₹ per 100 ¥", "#047857"), line("inr_cny", "₹ per yuan", "#7C3AED"),
-                            line("inr_aed", "₹ per AED", "#B91C1C")],
-                           "₹", ("inr_eur",), note="Source: European Central Bank (euro reference rates); dirham via its "
-                                                   "US-dollar peg."))
+                           note="Higher = weaker rupee. Source: US Federal Reserve (H.10), via FRED; published about "
+                                "one working day later."),
+             lambda: chart("Rupee per euro", [line("inr_eur", "₹ per €", NAVY)], "₹ per €", ("inr_eur",),
+                           note="Higher = weaker rupee. Source: European Central Bank euro reference rate (2:15 pm CET)."))
 
     with tabs[3]:
         section("bonds")
@@ -962,38 +957,35 @@ def euro_area():
 def china():
     cg = last("cn_gdp_growth")
     summary_line([f"GDP growth {cg:.1f}% (IMF, annual)" if cg is not None else "",
-                  f"inflation {last('cn_inflation'):.1f}% (IMF, annual)" if has("cn_inflation") else "",
-                  f"₹{last('inr_cny'):.2f} per yuan" if has("inr_cny") else ""])
+                  f"inflation {last('cn_inflation'):.1f}% (IMF, annual)" if has("cn_inflation") else ""])
     legend()
     section("growth")
     cards([card("cn_gdp_growth", "Real GDP growth", "growth", good="up", signal=sg.growth(cg, 5, 3)),
-           card("cn_inflation", "CPI inflation", "inflation"), card("inr_cny", "₹ per yuan", "currency"),
+           card("cn_inflation", "CPI inflation", "inflation"),
            card("cn_gov_debt_gdp", "General govt debt (IMF)", "fiscal"),
            card("cn_unemployment_ilo", "Unemployment (ILO)", "jobs")])
     pair(lambda: chart("Real GDP growth (IMF)", [line("cn_gdp_growth", "Actual/estimate", "#B91C1C", kind="bar"),
                                                  line("cn_gdp_growth_imf_proj", "IMF projection", "#F3A5A5", kind="bar")],
                        "%", ("cn_gdp_growth",)),
-         lambda: chart("Yuan vs rupee", [line("inr_cny", "₹ per yuan", "#7C3AED")], "₹ per yuan", ("inr_cny",),
-                       note="Derived from ECB euro reference rates; source: European Central Bank."))
+         lambda: chart("CPI inflation (IMF)", [line("cn_inflation", "China", "#B91C1C", kind="bar")], "%", ("cn_inflation",)))
     pair(lambda: chart("Government debt and fiscal balance, % of GDP (IMF)", [line("cn_gov_debt_gdp", "Debt", "#334155"),
                                                                               line("cn_gov_balance_gdp", "Fiscal balance", "#B91C1C")],
                        "% of GDP", ("cn_gov_debt_gdp",)),
          lambda: chart("GNI per capita vs India (US$)", [line("cn_gni_pc", "China", "#B91C1C"), line("in_gni_pc", "India", SAFFRON)],
                        "US$", ("cn_gni_pc",)))
     st.markdown('<div class="ml-cap">China monthly CPI is not used: no current official source we can fetch automatically '
-                '(FRED\'s copy stopped in 2025). Annual IMF figures are shown instead.</div>', unsafe_allow_html=True)
+                '(FRED\'s copy stopped in 2025). Annual IMF figures are shown instead. The rupee–yuan rate is not shown: '
+                'no official source publishes it free of charge.</div>', unsafe_allow_html=True)
 
 
 def japan():
     jg = last("jp_gdp_growth")
     summary_line([f"10Y JGB {last('jp_10y'):.2f}%" if has("jp_10y") else "",
-                  f"₹{last('inr_jpy100'):.2f} per 100 ¥" if has("inr_jpy100") else "",
                   f"unemployment {last('jp_unemployment'):.1f}%" if has("jp_unemployment") else "",
                   f"inflation {last('jp_inflation'):.1f}% (IMF, annual)" if has("jp_inflation") else ""])
     legend()
     jgdp = yoy("jp_gdp_real", 4)
     cards([card("jp_10y", "10Y JGB yield", "bonds", signal=sg.yield_move(get("jp_10y"), 60)),
-           card("inr_jpy100", "₹ per 100 ¥", "currency"),
            card("jp_gdp_real", "Real GDP growth, YoY", "growth", df=jgdp, derived=True, good="up",
                 signal=sg.growth(jgdp["value"].iloc[-1], 1, 0) if not jgdp.empty else None),
            card("jp_inflation", "CPI inflation (IMF)", "inflation", signal=sg.inflation_target(last("jp_inflation"))),
@@ -1001,7 +993,7 @@ def japan():
            card("jp_gov_debt_gdp", "General govt debt (IMF)", "fiscal")])
     pair(lambda: chart("10Y JGB and 3-month rate", [line("jp_10y", "10Y JGB", "#7C3AED"), line("jp_3m", "3-month interbank", NAVY)],
                        "%", ("jp_10y",)),
-         lambda: chart("Yen vs rupee", [line("inr_jpy100", "₹ per 100 ¥", "#7C3AED")], "₹ per 100 ¥", ("inr_jpy100",)))
+         lambda: chart("Unemployment rate", [line("jp_unemployment", "Japan", "#BE185D")], "%", ("jp_unemployment",)))
     pair(lambda: chart("Real GDP growth, YoY (derived)", [line("jp_gdp_real", "Japan", "#047857", df=jgdp, kind="bar")], "% YoY",
                        ("jp_gdp_real",)),
          lambda: chart("Government debt, % of GDP (IMF)", [line("jp_gov_debt_gdp", "Japan", "#334155")], "% of GDP",
@@ -1301,7 +1293,7 @@ def spec_india():
                  kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "in_gov_debt_gdp", good="down",
                      signal=sg.at_most(last("in_gov_debt_gdp"), 60, "the 60% FRBM anchor"))],
         "kpis2": [kpi("bank", "Repo rate", "RBI policy rate", "in_repo_rate", how="bp", signal=stance),
-                  kpi("fx", "Rupee", "₹ per US$ (ECB reference rates)", "inr_usd", how="pct", good="down", signal=rupee),
+                  kpi("fx", "Rupee", "₹ per US$ (US Federal Reserve)", "inr_usd", how="pct", good="down", signal=rupee),
                   kpi("yield", "10Y G-sec yield", "FBIL par yield", "in_10y", how="bp", signal=sg.yield_move(get("in_10y"))),
                   kpi("shield", "Forex reserves", "RBI, weekly", "in_fx_reserves", how="pct", good="up",
                       signal=sg.reserves(get("in_fx_reserves")))],
@@ -1416,20 +1408,16 @@ def spec_cn():
                  kpi("infl", "Inflation", "CPI, annual average (IMF)", "cn_inflation"),
                  kpi("jobs", "Unemployment", "ILO modelled", "cn_unemployment_ilo", good="down"),
                  kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "cn_gov_debt_gdp", good="down")],
-        "kpis2": [kpi("fx", "Yuan", "₹ per yuan (ECB reference rates)", "inr_cny", how="pct")],
+        "kpis2": [],
         "chart_sub": "Real GDP growth and CPI inflation (annual, IMF)",
         "chart": (get("cn_gdp_growth"), "Real GDP growth", get("cn_inflation"), "CPI inflation", "Source: IMF World Economic Outlook."),
-        "pulse": [pulse_row("fx", "₹ per yuan", "ECB, daily", "inr_cny", how="pct",
-                            status=change_status(get("inr_cny"), 30, ("neutral", "Yuan firmer vs ₹"),
-                                                 ("neutral", "Yuan weaker vs ₹"))),
-                  pulse_row("gdp", "IMF growth projection", "Next year", "cn_gdp_growth_imf_proj",
+        "pulse": [pulse_row("gdp", "IMF growth projection", "Next year", "cn_gdp_growth_imf_proj",
                             df=get("cn_gdp_growth_imf_proj").head(1)),
                   pulse_row("scale", "Fiscal balance", "% of GDP (IMF)", "cn_gov_balance_gdp", unit="percent_of_gdp")],
         "table": [("Real GDP growth (IMF)", "cn_gdp_growth", None, None, "Annual"),
                   ("CPI inflation (IMF)", "cn_inflation", None, None, "Annual"),
                   ("Unemployment (ILO)", "cn_unemployment_ilo", None, None, "Annual"),
-                  ("Public debt, % of GDP (IMF)", "cn_gov_debt_gdp", None, None, "Annual"),
-                  ("₹ per yuan (ECB)", "inr_cny", None, None, "Daily")],
+                  ("Public debt, % of GDP (IMF)", "cn_gov_debt_gdp", None, None, "Annual")],
         "note": " " + "; ".join(p for p in parts if p) + ". China monthly CPI is not shown: no current official series "
                 "we can fetch automatically.",
     }
@@ -1438,8 +1426,7 @@ def spec_cn():
 def spec_jp():
     gdp = yoy("jp_gdp_real", 4)
     parts = [not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY",
-             has("jp_10y") and f"10Y JGB {last('jp_10y'):.2f}%",
-             has("inr_jpy100") and f"₹{last('inr_jpy100'):.2f} per 100 ¥"]
+             has("jp_10y") and f"10Y JGB {last('jp_10y'):.2f}%"]
     return {
         "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", "jp_gdp_real", df=gdp, unit="percent", good="up",
                      signal=sg.growth(_first(gdp), 1, 0)),
@@ -1447,20 +1434,15 @@ def spec_jp():
                  kpi("jobs", "Unemployment", "Ages 15-64", "jp_unemployment", good="down",
                      signal=sg.trend_lower_is_better(get("jp_unemployment"), 180, "unemployment")),
                  kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "jp_gov_debt_gdp", good="down")],
-        "kpis2": [kpi("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp"),
-                  kpi("fx", "Yen", "₹ per 100 yen (ECB reference rates)", "inr_jpy100", how="pct")],
+        "kpis2": [kpi("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp")],
         "chart_sub": "Real GDP growth (YoY, derived) and CPI inflation (annual, IMF)",
         "chart": (gdp, "Real GDP growth (YoY)", get("jp_inflation"), "CPI inflation (annual)", "Source: FRED, IMF."),
-        "pulse": [pulse_row("fx", "₹ per 100 yen", "ECB, daily", "inr_jpy100", how="pct",
-                            status=change_status(get("inr_jpy100"), 30, ("neutral", "Yen firmer vs ₹"),
-                                                 ("neutral", "Yen weaker vs ₹"))),
-                  pulse_row("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp"),
+        "pulse": [pulse_row("yield", "10Y JGB", "Monthly average", "jp_10y", how="bp"),
                   pulse_row("drop", "3-month interbank rate", "Monthly", "jp_3m", how="bp")],
         "table": [("Real GDP growth (YoY, derived)", "jp_gdp_real", gdp, "percent", "Quarterly"),
                   ("CPI inflation (IMF)", "jp_inflation", None, None, "Annual"),
                   ("Unemployment rate", "jp_unemployment", None, None, "Monthly"),
                   ("10Y JGB yield", "jp_10y", None, None, "Monthly"),
-                  ("₹ per 100 yen (ECB)", "inr_jpy100", None, None, "Daily"),
                   ("Public debt, % of GDP (IMF)", "jp_gov_debt_gdp", None, None, "Annual")],
         "note": " " + "; ".join(p for p in parts if p) + ". The Bank of Japan policy rate is not shown: no current "
                 "official series we can fetch automatically.",
@@ -1721,7 +1703,7 @@ def briefing_page():
     kpi_row([kpi("yield", "US 10Y Treasury", "Par yield (US Treasury)", "us_10y", how="bp",
                  signal=sg.yield_move(get("us_10y"))),
              brent_card(b, pick),
-             kpi("fx", "Rupee", "₹ per US$ (ECB reference rates)", "inr_usd", how="pct", good="down",
+             kpi("fx", "Rupee", "₹ per US$ (US Federal Reserve)", "inr_usd", how="pct", good="down",
                  signal=sg.local_currency(get("inr_usd"))),
              kpi("gold", "Gold (24K)", "₹ per 10 g, IBJA closing rate", "in_gold", how="pct")])
     st.markdown('<div class="bsnap">Snapshot: official data fetched by MacroLens (dates on each card); the Brent '
@@ -1825,7 +1807,8 @@ def data_sources_page():
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
                 "European Central Bank, US Treasury, FRED, IMF and the World Bank, fetched automatically twice a day, at about "
                 "04:30 and 19:00 IST. FBIL market data (bond yields, T-bills, MIBOR) reaches the public with about a one-week "
-                "lag. Rupee exchange rates are derived from the ECB's euro reference rates (source: European Central Bank). "
+                "lag. Rupee exchange rates come straight from their publishers: ₹ per US$ from the US Federal Reserve (via FRED) "
+                "and ₹ per € from the European Central Bank. "
                 "Derived values (YoY %, spreads, shares, real rate) are computed by MacroLens and "
                 "labelled. IMF projections and budget estimates are kept as separate, labelled series.")
     q = quality(stamp)
