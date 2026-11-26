@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest  # noqa: E402
 APP = str(Path(__file__).resolve().parent.parent / "app" / "app.py")
 DATA = Path(__file__).resolve().parent.parent / "data" / "clean"
 PAGES = [":material/home: Overview", ":material/public: Countries", ":material/bar_chart: Indicators",
-         ":material/compare_arrows: Compare", ":material/database: Data sources", ":material/newspaper: Daily briefing"]
+         ":material/compare_arrows: Compare", None, ":material/newspaper: Daily briefing"]  # [4]: Data sources, now linked from Compare
 COUNTRIES = ["India", "United States", "Euro area", "China", "Japan", "United Kingdom", "France", "Germany"]
 
 pytestmark = pytest.mark.skipif(not any(DATA.glob("*.parquet")), reason="no stored data")
@@ -34,7 +34,18 @@ def test_indicators_each_country(country):
     assert not at.exception, at.exception
 
 
-@pytest.mark.parametrize("page", [PAGES[1], PAGES[3], PAGES[4], PAGES[5]])
+@pytest.mark.parametrize("page", [PAGES[1], PAGES[3], PAGES[5]])
 def test_other_pages(page):
     at = run(page, "India")
     assert not at.exception, at.exception
+
+
+def test_data_sources_not_in_menu_but_linked_from_compare():
+    at = run(PAGES[3], "India")
+    assert not any("Data sources" in o for o in at.radio[0].options)
+    at.button(key="open_sources").click().run()
+    assert not at.exception, at.exception
+    assert any("Data sources" in m.value for m in at.markdown)
+    at.button(key="close_sources").click().run()
+    assert not at.exception, at.exception
+    assert any("<h1>Compare</h1>" in m.value for m in at.markdown)

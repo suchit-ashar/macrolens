@@ -620,24 +620,32 @@ COUNTRY_CODE = {"India": "IN", "United States": "US", "Euro area": "EA", "China"
                 "France": "FR", "Germany": "DE"}
 PAGES = {":material/newspaper: Daily briefing": "Daily briefing", ":material/home: Overview": "Overview",
          ":material/public: Countries": "Countries",
-         ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare",
-         ":material/database: Data sources": "Data sources"}
+         ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare"}
+# Data sources is not in the menu (owner's request, 26 Nov 2026): a small link on the Compare page opens it.
 st.session_state.setdefault("page", ":material/newspaper: Daily briefing")  # the site opens on today's briefing
+st.session_state.setdefault("sources_open", False)
 st.session_state.setdefault("country_pick", "India")
 st.session_state.setdefault("compare_set", list(COUNTRY_LIST))
 
 
 def go_to(page: str, **state):
     st.session_state["page"] = next(k for k, v in PAGES.items() if v == page)
+    st.session_state["sources_open"] = False
     for k, v in state.items():
         st.session_state[k] = v
+
+
+def close_sources():
+    st.session_state["sources_open"] = False
 
 
 with st.sidebar:
     st.markdown(f'<div class="sb-brand"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" '
                 f'rx="1" fill="{SAFFRON}"/><rect x="10" y="7" width="4" height="14" rx="1" fill="#3B82F6"/><rect x="17" y="3" '
                 f'width="4" height="18" rx="1" fill="#60A5FA"/></svg>{BRAND}</div>', unsafe_allow_html=True)
-    page = PAGES[st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed")]
+    page = PAGES[st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed", on_change=close_sources)]
+    if st.session_state["sources_open"]:
+        page = "Data sources"
     st.markdown('<div class="sb-sub">QUICK COMPARE</div>', unsafe_allow_html=True)
     st.button("India vs United States", width="stretch", on_click=go_to,
               args=("Compare",), kwargs={"compare_set": ["India", "United States"]})
@@ -1676,6 +1684,8 @@ def countries_page():
 def compare_page():
     st.markdown(f'<div class="ov-h"><h1>Compare</h1></div><div class="ov-sub">Same indicators side by side.</div>',
                 unsafe_allow_html=True)
+    st.button("Data sources, quality checks and downloads →", type="tertiary", key="open_sources",
+              on_click=lambda: st.session_state.update(sources_open=True))
     sel = st.multiselect("Countries", COUNTRY_LIST, key="compare_set")
     codes = {COUNTRY_CODE[c] for c in sel}
     compare(codes)
@@ -2008,6 +2018,7 @@ def briefing_page():
 
 
 def data_sources_page():
+    st.button("← Back to Compare", type="tertiary", key="close_sources", on_click=close_sources)
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="note"><b>FRED®</b> {FRED_NOTICE}</div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "
@@ -2044,7 +2055,7 @@ elif page == "Indicators":
     VIEWS[country]()
 elif page == "Compare":
     compare_page()
-else:
+elif page == "Data sources":
     data_sources_page()
 st.caption("Data from the official sources linked on each chart; figures may be revised by the source.")
 st.markdown(f'<div class="site-disclaimer">Information only, not investment advice; AI-assisted.</div>'
