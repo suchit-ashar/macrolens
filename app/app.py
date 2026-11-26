@@ -635,17 +635,26 @@ def go_to(page: str, **state):
         st.session_state[k] = v
 
 
+def open_sources():
+    # Clear the menu highlight: Data sources is not a menu item, and any item (Compare included) must then navigate.
+    st.session_state["sources_open"] = True
+    st.session_state["page"] = None
+
+
 def close_sources():
     st.session_state["sources_open"] = False
+
+
+def back_to_compare():
+    go_to("Compare")
 
 
 with st.sidebar:
     st.markdown(f'<div class="sb-brand"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" '
                 f'rx="1" fill="{SAFFRON}"/><rect x="10" y="7" width="4" height="14" rx="1" fill="#3B82F6"/><rect x="17" y="3" '
                 f'width="4" height="18" rx="1" fill="#60A5FA"/></svg>{BRAND}</div>', unsafe_allow_html=True)
-    page = PAGES[st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed", on_change=close_sources)]
-    if st.session_state["sources_open"]:
-        page = "Data sources"
+    choice = st.radio("Navigate", list(PAGES), key="page", label_visibility="collapsed", on_change=close_sources)
+    page = "Data sources" if st.session_state["sources_open"] or choice is None else PAGES[choice]
     st.markdown('<div class="sb-sub">QUICK COMPARE</div>', unsafe_allow_html=True)
     st.button("India vs United States", width="stretch", on_click=go_to,
               args=("Compare",), kwargs={"compare_set": ["India", "United States"]})
@@ -1684,8 +1693,7 @@ def countries_page():
 def compare_page():
     st.markdown(f'<div class="ov-h"><h1>Compare</h1></div><div class="ov-sub">Same indicators side by side.</div>',
                 unsafe_allow_html=True)
-    st.button("Data sources, quality checks and downloads →", type="tertiary", key="open_sources",
-              on_click=lambda: st.session_state.update(sources_open=True))
+    st.button("Data sources, quality checks and downloads →", type="tertiary", key="open_sources", on_click=open_sources)
     sel = st.multiselect("Countries", COUNTRY_LIST, key="compare_set")
     codes = {COUNTRY_CODE[c] for c in sel}
     compare(codes)
@@ -2018,7 +2026,7 @@ def briefing_page():
 
 
 def data_sources_page():
-    st.button("← Back to Compare", type="tertiary", key="close_sources", on_click=close_sources)
+    st.button("← Back to Compare", type="tertiary", key="close_sources", on_click=back_to_compare)
     st.markdown(f'<div class="ov-h"><h1>Data sources</h1></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="note"><b>FRED®</b> {FRED_NOTICE}</div>', unsafe_allow_html=True)
     st.markdown(f"{summary['date'].notna().sum()} series from RBI, MoSPI, FBIL, IBJA, Union Budget, CGA, Ministry of Commerce, "

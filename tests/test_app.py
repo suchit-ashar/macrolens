@@ -46,6 +46,14 @@ def test_data_sources_not_in_menu_but_linked_from_compare():
     at.button(key="open_sources").click().run()
     assert not at.exception, at.exception
     assert any("Data sources" in m.value for m in at.markdown)
+    assert at.radio[0].value is None  # no menu item is highlighted while on Data sources
     at.button(key="close_sources").click().run()
     assert not at.exception, at.exception
     assert any("<h1>Compare</h1>" in m.value for m in at.markdown)
+    # From Data sources, every menu item navigates, including Compare itself.
+    for target, heading in [(PAGES[3], "<h1>Compare</h1>"), (PAGES[1], "<h1>Countries</h1>")]:
+        at.button(key="open_sources").click().run()  # we are on Compare before each round
+        assert any("Data sources" in m.value for m in at.markdown)
+        at.radio[0].set_value(target).run()
+        assert not at.exception, at.exception
+        assert any(heading in m.value for m in at.markdown), target
