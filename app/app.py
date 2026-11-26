@@ -50,7 +50,7 @@ TOPIC = {
 LIGHT = {"good": ("#16A34A", "#DCFCE7", "#166534"), "watch": ("#D97706", "#FEF3C7", "#92400E"),
          "bad": ("#DC2626", "#FDE2E1", "#991B1B"), "neutral": ("#64748B", "#EEF2F6", "#334155")}
 COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C", "JP": "#7C3AED", "GB": "#0E7490",
-                 "FR": "#DB2777", "DE": "#CA8A04", "GLOBAL": "#475569"}
+                 "FR": "#DB2777", "DE": "#111827", "GLOBAL": "#475569"}
 SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED", "#0F766E", "#B45309"]
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 BLUE = "#2563EB"
@@ -425,7 +425,8 @@ def fmt_value(v, unit):
         return f"£{v / 1e3:,.0f} bn"
     return {"percent": f"{v:.2f}%", "percent_of_gdp": f"{v:.1f}% of GDP", "inr_per_usd": f"₹{v:,.2f}",
             "inr": f"₹{v:,.2f}", "usd_per_barrel": f"${v:,.2f}", "usd_billion": f"${v:,.1f} bn",
-            "usd_per_eur": f"${v:,.4f}", "cny": f"¥{v:,.4f}", "jpy": f"¥{v:,.2f}"}.get(unit, f"{v:,.2f}")
+            "usd_per_eur": f"${v:,.4f}", "cny": f"¥{v:,.4f}", "jpy": f"¥{v:,.2f}",
+            "pp_spread": f"{v:+.2f} pp"}.get(unit, f"{v:,.2f}")
 
 
 def fmt_delta(d, unit) -> str:
@@ -504,6 +505,7 @@ def legend():
 # ======================= charts =======================
 DAYS = None  # set by the range control
 COMPARE_CODES = None  # set by the Compare page to filter lines by country
+BUND_ALSO = frozenset({"EA"})  # the German 10Y Bund also shows when the euro area is selected (euro benchmark)
 
 
 def clip(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
@@ -512,12 +514,18 @@ def clip(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
     return df[df["date"] >= pd.Timestamp(date.today()) - pd.Timedelta(days=DAYS)]
 
 
+def shown_in_compare(iid: str, also: frozenset = frozenset()) -> bool:
+    """On the Compare page, is this series' country (or one of `also`) among the selected countries?"""
+    return COMPARE_CODES is None or bool(({ROWS.loc[iid, "country"]} | also) & (COMPARE_CODES | {"GLOBAL"}))
+
+
 def line(iid: str, label: str, color: str | None = None, dash: str | None = None, df: pd.DataFrame | None = None,
-         kind: str = "line", scale: float = 1.0):
+         kind: str = "line", scale: float = 1.0, also: frozenset = frozenset()):
+    """`also`: extra Compare selections that show this line (the German Bund is the euro area benchmark)."""
     if iid not in ROWS.index:
         return None
     row = ROWS.loc[iid]
-    if COMPARE_CODES is not None and row["country"] not in COMPARE_CODES | {"GLOBAL"}:
+    if not shown_in_compare(iid, also):
         return None
     data = get(iid) if df is None else df
     if data.empty:
@@ -562,10 +570,18 @@ def chart(title: str, traces: list, unit: str, src: tuple = (), note: str = "", 
     if vals.max() - vals.min() < 1e-9:
         fig.update_yaxes(range=[vals.min() - 1, vals.max() + 1])
     st.plotly_chart(fig, width="stretch", config={"displaylogo": False})
-    src = [i for i in src if i in ROWS.index]
+    # On Compare, cite only the selected countries' series (so India-only notes do not appear without India).
+    src = [i for i in src if i in ROWS.index and shown_in_compare(i, BUND_ALSO if i == "de_10y" else frozenset())]
     if src or note:
-        links = ", ".join(dict.fromkeys(f'<a href="{ROWS.loc[i, "source_url"]}" target="_blank">{ROWS.loc[i, "source"]}</a>' for i in src))
-        notes = " ".join(dict.fromkeys(ROWS.loc[i, "note"] for i in src if isinstance(ROWS.loc[i, "note"], str)))
+        first_by_source = {}
+        for i in src:
+            first_by_source.setdefault(ROWS.loc[i, "source"], i)  # one link per source name, not "FRED, FRED, FRED"
+        links = ", ".join(f'<a href="{ROWS.loc[i, "source_url"]}" target="_blank">{s}</a>' for s, i in first_by_source.items())
+        # On Compare a note may apply to one country only (e.g. India's fiscal years), so name the country.
+        names = {v: k for k, v in COUNTRY_CODE.items()}
+        notes = " ".join(dict.fromkeys(
+            (f"{names.get(ROWS.loc[i, 'country'], '')}: " if COMPARE_CODES is not None else "") + ROWS.loc[i, "note"]
+            for i in src if isinstance(ROWS.loc[i, "note"], str)))
         st.markdown(f'<div class="ml-cap">{"Source: " + links if links else ""} {notes} {note}</div>', unsafe_allow_html=True)
 
 
@@ -589,6 +605,11 @@ upd_txt = f"Last updated: {upd.tz_convert(timezone(timedelta(hours=5, minutes=30
 COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan", "United Kingdom", "France", "Germany"]
 FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp", "United Kingdom": "gb",
          "France": "fr", "Germany": "de"}
+def the(c: str) -> str:
+    """Country name as used mid-sentence: 'the United Kingdom', 'the euro area', 'India'."""
+    return {"United States": "the United States", "United Kingdom": "the United Kingdom", "Euro area": "the euro area"}.get(c, c)
+
+
 COUNTRY_CODE = {"India": "IN", "United States": "US", "Euro area": "EA", "China": "CN", "Japan": "JP", "United Kingdom": "GB",
                 "France": "FR", "Germany": "DE"}
 PAGES = {":material/newspaper: Daily briefing": "Daily briefing", ":material/home: Overview": "Overview",
@@ -1012,11 +1033,12 @@ def united_kingdom():
     gdp = yoy("gb_gdp_real", 4)
     summary_line([f"10Y gilt {last('gb_10y'):.2f}%" if has("gb_10y") else "",
                   f"unemployment {last('gb_unemployment'):.1f}%" if has("gb_unemployment") else "",
-                  f"inflation {last('gb_inflation'):.1f}% (IMF, annual)" if has("gb_inflation") else ""])
+                  f"inflation {last('gb_inflation'):.1f}% (IMF, {get('gb_inflation')['date'].iloc[-1].year})"
+                  if has("gb_inflation") else ""])
     legend()
-    cards([card("gb_10y", "10Y gilt yield", "bonds", signal=sg.yield_move(get("gb_10y"), 60)),
-           card("gb_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, derived=True, good="up",
-                signal=sg.growth(_first(gdp), 1, 0) if not gdp.empty else None),
+    cards([card("gb_10y", "10Y gilt yield", "bonds", signal=sg.yield_move(get("gb_10y"), 30)),
+           card("gb_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, unit="percent", derived=True, good="up",
+                signal=sg.growth(_first(gdp), 1.5, 0) if not gdp.empty else None),
            card("gb_inflation", "CPI inflation (IMF)", "inflation", signal=sg.inflation_target(last("gb_inflation"))),
            card("gb_unemployment", "Unemployment", "jobs", good="down"),
            card("gb_gov_debt_gdp", "General govt debt (IMF)", "fiscal")])
@@ -1031,7 +1053,7 @@ def united_kingdom():
           "% of GDP", ("gb_gov_debt_gdp",), height=260)
     st.markdown('<div class="ml-cap">Not shown: the Bank of England Bank Rate and monthly CPI (no current official series we '
                 'can fetch automatically; annual IMF inflation is shown instead), and the rupee–pound rate (no free official '
-                'source publishes it directly).</div>', unsafe_allow_html=True)
+                'source publishes it directly; we do not calculate cross rates).</div>', unsafe_allow_html=True)
 
 
 def euro_member(code: str, name: str, color: str, bond: str):
@@ -1043,17 +1065,18 @@ def euro_member(code: str, name: str, color: str, bond: str):
                   f"HICP inflation {_first(hicp):.1f}% (derived)" if not hicp.empty else "",
                   f"unemployment {last(f'{p}_unemployment'):.1f}%" if has(f"{p}_unemployment") else ""])
     legend()
-    cards([card(f"{p}_10y", f"10Y {bond} yield", "bonds", signal=sg.yield_move(get(f"{p}_10y"), 60)),
-           card("fr_10y", "France − Germany 10Y spread", "bonds", df=spread, unit="pp_spread") if code == "FR" else "",
-           card(f"{p}_hicp", "HICP inflation", "inflation", df=hicp, derived=True, good="down",
+    cards([card(f"{p}_10y", f"10Y {bond} yield", "bonds", signal=sg.yield_move(get(f"{p}_10y"), 30)),
+           card("fr_10y", "France − Germany 10Y spread", "bonds", df=spread, unit="pp_spread", derived=True)
+           if code == "FR" else "",
+           card(f"{p}_hicp", "HICP inflation", "inflation", df=hicp, unit="percent", derived=True, good="down",
                 signal=sg.inflation_target(_first(hicp)) if not hicp.empty else None),
-           card(f"{p}_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, derived=True, good="up",
-                signal=sg.growth(_first(gdp), 1, 0) if not gdp.empty else None),
+           card(f"{p}_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, unit="percent", derived=True, good="up",
+                signal=sg.growth(_first(gdp), 1.5, 0) if not gdp.empty else None),
            card(f"{p}_unemployment", "Unemployment", "jobs", good="down"),
            card(f"{p}_gov_debt_gdp", "General govt debt (IMF)", "fiscal")])
     yields = [line(f"{p}_10y", f"10Y {bond}", color)]
     if code == "FR":
-        yields.append(line("de_10y", "10Y Bund (Germany)", "#CA8A04", "dot"))
+        yields.append(line("de_10y", "10Y Bund (Germany)", "#111827", "dot"))
     pair(lambda: chart("10-year government bond yield", yields, "%", (f"{p}_10y",)),
          lambda: chart("HICP inflation (derived YoY)", [line(f"{p}_hicp", name, "#B91C1C", df=hicp)], "% YoY",
                        (f"{p}_hicp",), hlines=[(2, "ECB 2% target")]))
@@ -1066,8 +1089,8 @@ def euro_member(code: str, name: str, color: str, bond: str):
                        "% of GDP", (f"{p}_gov_debt_gdp",)),
          lambda: chart("Real GDP growth outlook (IMF projection)", [line(f"{p}_gdp_growth_imf_proj", name, color, kind="bar")],
                        "%", (f"{p}_gdp_growth_imf_proj",)))
-    st.markdown(f'<div class="ml-cap">{name} uses the euro, so its policy rates are set by the ECB and the rupee rate is the '
-                '₹ per euro rate: both are on the Euro area page.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ml-cap">{name} uses the euro: ECB policy rates and the ₹ per euro rate are on the Euro area '
+                'page.</div>', unsafe_allow_html=True)
 
 
 def france():
@@ -1075,7 +1098,7 @@ def france():
 
 
 def germany():
-    euro_member("DE", "Germany", "#CA8A04", "Bund")
+    euro_member("DE", "Germany", "#111827", "Bund")
 
 
 def compare(codes: set | None = None):
@@ -1089,7 +1112,8 @@ def compare(codes: set | None = None):
                                         line("ea_ecb_deposit_rate", "ECB deposit", "#047857")], "%",
                        ("in_repo_rate", "us_policy_rate", "ea_ecb_deposit_rate")),
          lambda: chart("10-year government bond yields", [line("in_10y", "India", SAFFRON), line("us_10y", "US", "#1D4ED8"),
-                                                          line("de_10y", "Germany", "#CA8A04"), line("jp_10y", "Japan", "#7C3AED"),
+                                                          line("de_10y", "Germany (euro benchmark)", "#111827", also=BUND_ALSO),
+                                                          line("jp_10y", "Japan", "#7C3AED"),
                                                           line("gb_10y", "UK", "#0E7490"), line("fr_10y", "France", "#DB2777")],
                        "%", ("in_10y", "us_10y", "de_10y", "jp_10y", "gb_10y", "fr_10y")))
     pair(lambda: chart("Headline inflation", [line("in_cpi_inflation", "India", SAFFRON),
@@ -1097,30 +1121,34 @@ def compare(codes: set | None = None):
                                               line("us_cpi", "US (derived)", "#1D4ED8", df=yoy("us_cpi")),
                                               line("ea_hicp", "Euro area (derived)", "#047857", df=yoy("ea_hicp")),
                                               line("fr_hicp", "France (derived)", "#DB2777", df=yoy("fr_hicp")),
-                                              line("de_hicp", "Germany (derived)", "#CA8A04", df=yoy("de_hicp"))],
+                                              line("de_hicp", "Germany (derived)", "#111827", df=yoy("de_hicp"))],
                        "% YoY", ("in_cpi_inflation", "us_cpi", "ea_hicp", "fr_hicp", "de_hicp"),
-                       note="UK monthly CPI is not shown: no current series from our sources."),
+                       note="UK monthly CPI is not shown: no current series from our sources." if "GB" in (codes or {"GB"}) else ""),
          lambda: chart("Real GDP growth outlook (IMF projections)", [line("in_gdp_growth_imf_proj", "India", SAFFRON),
                                                                      line("us_gdp_growth_imf_proj", "US", "#1D4ED8"),
                                                                      line("cn_gdp_growth_imf_proj", "China", "#B91C1C"),
                                                                      line("jp_gdp_growth_imf_proj", "Japan", "#7C3AED"),
                                                                      line("gb_gdp_growth_imf_proj", "UK", "#0E7490"),
                                                                      line("fr_gdp_growth_imf_proj", "France", "#DB2777"),
-                                                                     line("de_gdp_growth_imf_proj", "Germany", "#CA8A04")],
-                       "%", ("in_gdp_growth_imf_proj",)))
+                                                                     line("de_gdp_growth_imf_proj", "Germany", "#111827")],
+                       "%", ("in_gdp_growth_imf_proj", "us_gdp_growth_imf_proj", "cn_gdp_growth_imf_proj", "jp_gdp_growth_imf_proj",
+                             "gb_gdp_growth_imf_proj", "fr_gdp_growth_imf_proj", "de_gdp_growth_imf_proj")))
     pair(lambda: chart("General government debt, % of GDP (IMF)", [line("in_gov_debt_gdp", "India", SAFFRON),
                                                                    line("us_gov_debt_gdp", "US", "#1D4ED8"),
                                                                    line("cn_gov_debt_gdp", "China", "#B91C1C"),
                                                                    line("jp_gov_debt_gdp", "Japan", "#7C3AED"),
                                                                    line("gb_gov_debt_gdp", "UK", "#0E7490"),
                                                                    line("fr_gov_debt_gdp", "France", "#DB2777"),
-                                                                   line("de_gov_debt_gdp", "Germany", "#CA8A04")],
-                       "% of GDP", ("in_gov_debt_gdp",)),
+                                                                   line("de_gov_debt_gdp", "Germany", "#111827")],
+                       "% of GDP", ("in_gov_debt_gdp", "us_gov_debt_gdp", "cn_gov_debt_gdp", "jp_gov_debt_gdp", "gb_gov_debt_gdp",
+                                    "fr_gov_debt_gdp", "de_gov_debt_gdp")),
          lambda: chart("Unemployment", [line("in_unemployment_ilo", "India (ILO)", SAFFRON), line("us_unemployment", "US", "#1D4ED8"),
                                         line("cn_unemployment_ilo", "China (ILO)", "#B91C1C"),
                                         line("jp_unemployment", "Japan", "#7C3AED"), line("gb_unemployment", "UK", "#0E7490"),
                                         line("fr_unemployment", "France", "#DB2777"),
-                                        line("de_unemployment", "Germany", "#CA8A04")], "%", ("in_unemployment_ilo",)))
+                                        line("de_unemployment", "Germany", "#111827")], "%",
+                       ("in_unemployment_ilo", "us_unemployment", "cn_unemployment_ilo", "jp_unemployment", "gb_unemployment",
+                        "fr_unemployment", "de_unemployment")))
     chart("Brent crude", [line("brent", "Brent", "#92400E")], "US$ per barrel", ("brent",), height=260,
           note="India imports most of its oil, so oil prices feed into inflation, the current account and the rupee.")
 
@@ -1329,7 +1357,7 @@ def overview(c: str):
     ok = int((q["severity"] == "error").sum()) == 0
     badge = '<span class="ov-ok">✓ Data verified</span>' if ok else '<span class="ov-warn">Data check pending</span>'
     st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[c]}.png" alt=""><h1>{c} | <span>Economic overview</span></h1>'
-                f'{badge}</div><div class="ov-sub">Key macroeconomic indicators, trends and outlook for {c}, '
+                f'{badge}</div><div class="ov-sub">Key macroeconomic indicators, trends and outlook for {the(c)}, '
                 'from official sources.</div>', unsafe_allow_html=True)
     spec = COUNTRY_SPECS[c]()
     kpi_row(spec["kpis"])
@@ -1349,7 +1377,7 @@ def overview(c: str):
     with st.container(border=True):
         h1, h2 = st.columns([4, 1])
         h1.markdown(f'<h3 style="margin:0;color:{NAVY};font-size:1.25rem">Explore key indicators</h3>'
-                    f'<div style="color:{MUTED};font-size:.85rem">Latest data for {c} with sources</div>',
+                    f'<div style="color:{MUTED};font-size:.85rem">Latest data for {the(c)} with sources</div>',
                     unsafe_allow_html=True)
         h2.download_button("⤓ Download data (CSV)", table.to_csv(index=False).encode("utf-8"),
                            file_name=f"macrolens_{FLAGS[c]}_key_indicators.csv", mime="text/csv", width="stretch")
@@ -1544,46 +1572,54 @@ def spec_gb():
              has("gb_unemployment") and f"unemployment {last('gb_unemployment'):.1f}%"]
     return {
         "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", "gb_gdp_real", df=gdp, unit="percent", good="up",
-                     signal=sg.growth(_first(gdp), 1, 0)),
+                     signal=sg.growth(_first(gdp), 1.5, 0)),
                  kpi("infl", "Inflation", "CPI, annual (IMF)", "gb_inflation", signal=sg.inflation_target(last("gb_inflation"))),
                  kpi("jobs", "Unemployment", "Ages 15+, SA", "gb_unemployment", good="down",
                      signal=sg.trend_lower_is_better(get("gb_unemployment"), 180, "unemployment")),
                  kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "gb_gov_debt_gdp", good="down")],
-        "kpis2": [kpi("yield", "10Y gilt", "Monthly average", "gb_10y", how="bp", signal=sg.yield_move(get("gb_10y"), 60))],
+        "kpis2": [kpi("yield", "10Y gilt", "Monthly average", "gb_10y", how="bp", signal=sg.yield_move(get("gb_10y"), 30))],
         "chart_sub": "Real GDP growth (YoY, derived) and CPI inflation (annual, IMF)",
         "chart": (gdp, "Real GDP growth (YoY)", get("gb_inflation"), "CPI inflation (annual)", "Source: FRED, IMF."),
         "pulse": [pulse_row("yield", "10Y gilt", "Monthly average", "gb_10y", how="bp"),
-                  pulse_row("gdp", "IMF growth projection", "Next year", "gb_gdp_growth_imf_proj",
-                            df=get("gb_gdp_growth_imf_proj").head(1)),
+                  proj_row("gb_gdp_growth_imf_proj"),
                   pulse_row("scale", "Fiscal balance", "% of GDP (IMF)", "gb_gov_balance_gdp", unit="percent_of_gdp")],
         "table": [("Real GDP growth (YoY, derived)", "gb_gdp_real", gdp, "percent", "Quarterly"),
                   ("CPI inflation (IMF)", "gb_inflation", None, None, "Annual"),
                   ("Unemployment rate", "gb_unemployment", None, None, "Monthly"),
                   ("10Y gilt yield", "gb_10y", None, None, "Monthly"),
                   ("Public debt, % of GDP (IMF)", "gb_gov_debt_gdp", None, None, "Annual")],
-        "note": " " + "; ".join(p for p in parts if p) + ". The Bank of England Bank Rate, monthly CPI and the rupee–pound "
-                "rate are not shown: no current official series from our existing sources.",
+        "note": " " + "; ".join(p for p in parts if p) + ". Not shown: the Bank of England Bank Rate and monthly CPI (no "
+                "current official series we can fetch automatically) and the rupee–pound rate (no free official source "
+                "publishes it directly; we do not calculate cross rates).",
     }
+
+
+def proj_row(iid: str) -> str:
+    """Pulse row for the first IMF projection year, labelled with that year."""
+    df = get(iid).head(1)
+    return pulse_row("gdp", "IMF growth projection", f"For {df['date'].iloc[0].year}" if not df.empty else "", iid, df=df)
 
 
 def _spec_euro_member(code: str, name: str, bond: str):
     p = code.lower()
     hicp, gdp = yoy(f"{p}_hicp"), yoy(f"{p}_gdp_real", 4)
     spread = diff("fr_10y", "de_10y")
-    parts = [not hicp.empty and f"HICP inflation {_first(hicp):.1f}% is {sg.inflation_target(_first(hicp)).text}",
+    parts = [not hicp.empty and f"HICP inflation {_first(hicp):.1f}% is "
+                                + sg.inflation_target(_first(hicp)).text.replace("the 2% target", "the ECB's 2% target"),
              not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY",
              code == "FR" and not spread.empty and f"France pays {_first(spread):.2f} pp over Germany on 10-year debt"]
-    kpis2 = [kpi("yield", f"10Y {bond}", "Monthly average", f"{p}_10y", how="bp", signal=sg.yield_move(get(f"{p}_10y"), 60))]
+    kpis2 = [kpi("yield", f"10Y {bond}", "Monthly average", f"{p}_10y", how="bp", signal=sg.yield_move(get(f"{p}_10y"), 30))]
     pulse = [pulse_row("yield", f"10Y {bond}", "Monthly average", f"{p}_10y", how="bp")]
     if code == "FR":
-        kpis2.append(kpi("scale", "Spread vs Germany", "10Y OAT − Bund", "fr_10y", df=spread, unit="pp_spread", how="bp"))
-        pulse.append(pulse_row("scale", "Spread vs Germany", "10Y OAT − Bund", "fr_10y", df=spread, unit="pp_spread", how="bp"))
-    pulse += [pulse_row("gdp", "IMF growth projection", "Next year", f"{p}_gdp_growth_imf_proj",
-                        df=get(f"{p}_gdp_growth_imf_proj").head(1)),
+        kpis2.append(kpi("scale", "Spread vs Germany", "10Y OAT − Bund, derived", "fr_10y", df=spread, unit="pp_spread",
+                         how="bp"))
+        pulse.append(pulse_row("scale", "Spread vs Germany", "10Y OAT − Bund, derived", "fr_10y", df=spread, unit="pp_spread",
+                               how="bp"))
+    pulse += [proj_row(f"{p}_gdp_growth_imf_proj"),
               pulse_row("debt", "Fiscal balance", "% of GDP (IMF)", f"{p}_gov_balance_gdp", unit="percent_of_gdp")]
     return {
         "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", f"{p}_gdp_real", df=gdp, unit="percent", good="up",
-                     signal=sg.growth(_first(gdp), 1, 0)),
+                     signal=sg.growth(_first(gdp), 1.5, 0)),
                  kpi("infl", "Inflation", "HICP, YoY (derived)", f"{p}_hicp", df=hicp, unit="percent", good="down",
                      signal=sg.inflation_target(_first(hicp))),
                  kpi("jobs", "Unemployment", "Ages 15+, SA", f"{p}_unemployment", good="down",
@@ -1997,7 +2033,7 @@ elif page == "Countries":
     countries_page()
 elif page == "Indicators":
     st.markdown(f'<div class="ov-h"><img src="https://flagcdn.com/w80/{FLAGS[country]}.png" alt=""><h1>{country} | '
-                f'<span>Indicators</span></h1></div><div class="ov-sub">Every series we track for {country}, by topic.</div>',
+                f'<span>Indicators</span></h1></div><div class="ov-sub">Every series we track for {the(country)}, by topic.</div>',
                 unsafe_allow_html=True)
     VIEWS[country]()
 elif page == "Compare":

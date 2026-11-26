@@ -1803,7 +1803,7 @@
 
 
 # ============================== GERMANY ==============================
-# Added 2026-11-26. The 10-year Bund yield (de_10y) is listed in the euro area section.
+# Added 2026-11-26. The 10-year Bund yield (de_10y, country DE) is listed in the euro area section.
 - id: de_hicp
   country: DE
   topic: inflation
