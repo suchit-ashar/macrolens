@@ -83,7 +83,8 @@ and previous value per indicator).
 Design B + C (approved 2026-11-22): clean finance layout (white, navy #0B2545, India saffron
 #E07B39) with a one-line summary, plus one colour per topic and rule-based traffic lights on
 cards (`analytics/signals.py`: comparisons with official targets or recent history, never
-forecasts). A country selector (India, United States, Euro area, China, Japan, Compare) drives
+forecasts). A country selector (India, United States, Euro area, China, Japan, United Kingdom,
+France, Germany) drives
 the page; India has topic tabs in the order users consult them (Overview, Policy rates,
 Currency, Bonds, Liquidity, Inflation, Growth, External, Fiscal, Jobs). Sources, quality checks
 and CSV downloads sit in an "About the data" expander at the bottom. Theme in
@@ -111,6 +112,10 @@ fetch never breaks the page.
 - 2026-11: Fiscal cross-country data moved from FRED's IMF copy (frozen at April 2025) to the
   IMF SDMX API (latest WEO). Union Budget figures come from the Budget at a Glance workbook
   and CGA monthly accounts (no official fiscal API exists; data.gov.in fiscal sets are stale).
+- 2026-11-26: Added the United Kingdom, France and Germany from existing sources only (FRED, IMF
+  WEO). Not used because FRED's copies are stale: Bank of England Bank Rate, UK monthly CPI and
+  UK 3-month rate. No rupee-pound rate (cross rates are not calculated). `de_10y` moved from
+  the euro area to Germany (DE).
 - 2026-11: Not used because not current: FRED China monthly CPI (ends 2025), FRED euro area
   unemployment (ends 2023), World Bank India central government debt (ends 2018).
 - 2026-11: Known holes, by source: Union Budget Actuals for FY 2022-23 (Budget 2024-25 files

@@ -5,7 +5,7 @@ C: each topic has its own colour; every card carries a rule-based traffic light
    (analytics/signals.py) comparing the number with an official target or recent history.
 
 Run:  streamlit run app/app.py
-A country selector drives the page: India, United States, Euro area, China, Japan, Compare.
+A country selector drives the page: India, United States, Euro area, China, Japan, United Kingdom, France, Germany.
 Charts and cards skip series that are missing, so a failed fetch never breaks the page.
 """
 import re
@@ -49,7 +49,8 @@ TOPIC = {
 }
 LIGHT = {"good": ("#16A34A", "#DCFCE7", "#166534"), "watch": ("#D97706", "#FEF3C7", "#92400E"),
          "bad": ("#DC2626", "#FDE2E1", "#991B1B"), "neutral": ("#64748B", "#EEF2F6", "#334155")}
-COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C", "JP": "#7C3AED", "GLOBAL": "#475569"}
+COUNTRY_COLOR = {"IN": SAFFRON, "US": "#1D4ED8", "EA": "#047857", "CN": "#B91C1C", "JP": "#7C3AED", "GB": "#0E7490",
+                 "FR": "#DB2777", "DE": "#CA8A04", "GLOBAL": "#475569"}
 SERIES_PALETTE = ["#0B2545", SAFFRON, "#1D4ED8", "#047857", "#B91C1C", "#7C3AED", "#0F766E", "#B45309"]
 RANGES = {"1Y": 365, "3Y": 3 * 365, "5Y": 5 * 365, "10Y": 10 * 365, "Max": None}
 BLUE = "#2563EB"
@@ -391,7 +392,7 @@ def diff(a: str, b: str) -> pd.DataFrame:
 
 
 # ======================= formatting =======================
-MONEY_UNITS = {"inr_crore", "usd_million", "usd", "eur_million", "jpy_billion", "usd_billion"}
+MONEY_UNITS = {"inr_crore", "usd_million", "usd", "eur_million", "jpy_billion", "usd_billion", "gbp_million"}
 
 
 def inr_group(n: float) -> str:
@@ -420,6 +421,8 @@ def fmt_value(v, unit):
         return f"€{v / 1e6:,.2f} tn"
     if unit == "jpy_billion":
         return f"¥{v / 1e3:,.0f} tn"
+    if unit == "gbp_million":
+        return f"£{v / 1e3:,.0f} bn"
     return {"percent": f"{v:.2f}%", "percent_of_gdp": f"{v:.1f}% of GDP", "inr_per_usd": f"₹{v:,.2f}",
             "inr": f"₹{v:,.2f}", "usd_per_barrel": f"${v:,.2f}", "usd_billion": f"${v:,.1f} bn",
             "usd_per_eur": f"${v:,.4f}", "cny": f"¥{v:,.4f}", "jpy": f"¥{v:,.2f}"}.get(unit, f"{v:,.2f}")
@@ -583,15 +586,18 @@ def summary_line(parts: list[str]):
 # ======================= header =======================
 upd = pd.to_datetime(summary["fetched_at"].dropna(), utc=True).max() if summary["fetched_at"].notna().any() else None
 upd_txt = f"Last updated: {upd.tz_convert(timezone(timedelta(hours=5, minutes=30))):%d %b %Y, %H:%M} IST" if upd is not None else ""
-COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan"]
-FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp"}
+COUNTRY_LIST = ["India", "United States", "Euro area", "China", "Japan", "United Kingdom", "France", "Germany"]
+FLAGS = {"India": "in", "United States": "us", "Euro area": "eu", "China": "cn", "Japan": "jp", "United Kingdom": "gb",
+         "France": "fr", "Germany": "de"}
+COUNTRY_CODE = {"India": "IN", "United States": "US", "Euro area": "EA", "China": "CN", "Japan": "JP", "United Kingdom": "GB",
+                "France": "FR", "Germany": "DE"}
 PAGES = {":material/newspaper: Daily briefing": "Daily briefing", ":material/home: Overview": "Overview",
          ":material/public: Countries": "Countries",
          ":material/bar_chart: Indicators": "Indicators", ":material/compare_arrows: Compare": "Compare",
          ":material/database: Data sources": "Data sources"}
 st.session_state.setdefault("page", ":material/newspaper: Daily briefing")  # the site opens on today's briefing
 st.session_state.setdefault("country_pick", "India")
-st.session_state.setdefault("compare_set", ["India", "United States", "Euro area", "China", "Japan"])
+st.session_state.setdefault("compare_set", list(COUNTRY_LIST))
 
 
 def go_to(page: str, **state):
@@ -1002,6 +1008,76 @@ def japan():
                 'automatically.</div>', unsafe_allow_html=True)
 
 
+def united_kingdom():
+    gdp = yoy("gb_gdp_real", 4)
+    summary_line([f"10Y gilt {last('gb_10y'):.2f}%" if has("gb_10y") else "",
+                  f"unemployment {last('gb_unemployment'):.1f}%" if has("gb_unemployment") else "",
+                  f"inflation {last('gb_inflation'):.1f}% (IMF, annual)" if has("gb_inflation") else ""])
+    legend()
+    cards([card("gb_10y", "10Y gilt yield", "bonds", signal=sg.yield_move(get("gb_10y"), 60)),
+           card("gb_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, derived=True, good="up",
+                signal=sg.growth(_first(gdp), 1, 0) if not gdp.empty else None),
+           card("gb_inflation", "CPI inflation (IMF)", "inflation", signal=sg.inflation_target(last("gb_inflation"))),
+           card("gb_unemployment", "Unemployment", "jobs", good="down"),
+           card("gb_gov_debt_gdp", "General govt debt (IMF)", "fiscal")])
+    pair(lambda: chart("10Y gilt yield", [line("gb_10y", "10Y gilt", "#0E7490")], "%", ("gb_10y",)),
+         lambda: chart("Unemployment rate", [line("gb_unemployment", "UK", "#BE185D")], "%", ("gb_unemployment",)))
+    pair(lambda: chart("Real GDP growth, YoY (derived)", [line("gb_gdp_real", "UK", "#047857", df=gdp, kind="bar")], "% YoY",
+                       ("gb_gdp_real",)),
+         lambda: chart("Real GDP growth outlook (IMF projection)", [line("gb_gdp_growth_imf_proj", "UK", "#0E7490", kind="bar")],
+                       "%", ("gb_gdp_growth_imf_proj",)))
+    chart("Government debt and fiscal balance, % of GDP (IMF)", [line("gb_gov_debt_gdp", "Debt", "#334155"),
+                                                                 line("gb_gov_balance_gdp", "Fiscal balance", "#B91C1C")],
+          "% of GDP", ("gb_gov_debt_gdp",), height=260)
+    st.markdown('<div class="ml-cap">Not shown: the Bank of England Bank Rate and monthly CPI (no current official series we '
+                'can fetch automatically; annual IMF inflation is shown instead), and the rupee–pound rate (no free official '
+                'source publishes it directly).</div>', unsafe_allow_html=True)
+
+
+def euro_member(code: str, name: str, color: str, bond: str):
+    """France and Germany: same layout (euro members, so ECB rates and the euro apply; see the Euro area page)."""
+    p = code.lower()
+    hicp, gdp = yoy(f"{p}_hicp"), yoy(f"{p}_gdp_real", 4)
+    spread = diff("fr_10y", "de_10y")
+    summary_line([f"10Y {bond} {last(f'{p}_10y'):.2f}%" if has(f"{p}_10y") else "",
+                  f"HICP inflation {_first(hicp):.1f}% (derived)" if not hicp.empty else "",
+                  f"unemployment {last(f'{p}_unemployment'):.1f}%" if has(f"{p}_unemployment") else ""])
+    legend()
+    cards([card(f"{p}_10y", f"10Y {bond} yield", "bonds", signal=sg.yield_move(get(f"{p}_10y"), 60)),
+           card("fr_10y", "France − Germany 10Y spread", "bonds", df=spread, unit="pp_spread") if code == "FR" else "",
+           card(f"{p}_hicp", "HICP inflation", "inflation", df=hicp, derived=True, good="down",
+                signal=sg.inflation_target(_first(hicp)) if not hicp.empty else None),
+           card(f"{p}_gdp_real", "Real GDP growth, YoY", "growth", df=gdp, derived=True, good="up",
+                signal=sg.growth(_first(gdp), 1, 0) if not gdp.empty else None),
+           card(f"{p}_unemployment", "Unemployment", "jobs", good="down"),
+           card(f"{p}_gov_debt_gdp", "General govt debt (IMF)", "fiscal")])
+    yields = [line(f"{p}_10y", f"10Y {bond}", color)]
+    if code == "FR":
+        yields.append(line("de_10y", "10Y Bund (Germany)", "#CA8A04", "dot"))
+    pair(lambda: chart("10-year government bond yield", yields, "%", (f"{p}_10y",)),
+         lambda: chart("HICP inflation (derived YoY)", [line(f"{p}_hicp", name, "#B91C1C", df=hicp)], "% YoY",
+                       (f"{p}_hicp",), hlines=[(2, "ECB 2% target")]))
+    pair(lambda: chart("Real GDP growth, YoY (derived)", [line(f"{p}_gdp_real", name, "#047857", df=gdp, kind="bar")], "% YoY",
+                       (f"{p}_gdp_real",)),
+         lambda: chart("Unemployment rate", [line(f"{p}_unemployment", name, "#BE185D")], "%", (f"{p}_unemployment",)))
+    pair(lambda: chart("Government debt and fiscal balance, % of GDP (IMF)", [line(f"{p}_gov_debt_gdp", "Debt", "#334155"),
+                                                                              line(f"{p}_gov_balance_gdp", "Fiscal balance",
+                                                                                   "#B91C1C")],
+                       "% of GDP", (f"{p}_gov_debt_gdp",)),
+         lambda: chart("Real GDP growth outlook (IMF projection)", [line(f"{p}_gdp_growth_imf_proj", name, color, kind="bar")],
+                       "%", (f"{p}_gdp_growth_imf_proj",)))
+    st.markdown(f'<div class="ml-cap">{name} uses the euro, so its policy rates are set by the ECB and the rupee rate is the '
+                '₹ per euro rate: both are on the Euro area page.</div>', unsafe_allow_html=True)
+
+
+def france():
+    euro_member("FR", "France", "#DB2777", "OAT")
+
+
+def germany():
+    euro_member("DE", "Germany", "#CA8A04", "Bund")
+
+
 def compare(codes: set | None = None):
     """Cross-country charts; `codes` (e.g. {'IN', 'US'}) limits which countries' lines are drawn."""
     global COMPARE_CODES
@@ -1013,26 +1089,38 @@ def compare(codes: set | None = None):
                                         line("ea_ecb_deposit_rate", "ECB deposit", "#047857")], "%",
                        ("in_repo_rate", "us_policy_rate", "ea_ecb_deposit_rate")),
          lambda: chart("10-year government bond yields", [line("in_10y", "India", SAFFRON), line("us_10y", "US", "#1D4ED8"),
-                                                          line("de_10y", "Germany", "#047857"), line("jp_10y", "Japan", "#7C3AED")],
-                       "%", ("in_10y", "us_10y", "de_10y", "jp_10y")))
+                                                          line("de_10y", "Germany", "#CA8A04"), line("jp_10y", "Japan", "#7C3AED"),
+                                                          line("gb_10y", "UK", "#0E7490"), line("fr_10y", "France", "#DB2777")],
+                       "%", ("in_10y", "us_10y", "de_10y", "jp_10y", "gb_10y", "fr_10y")))
     pair(lambda: chart("Headline inflation", [line("in_cpi_inflation", "India", SAFFRON),
                                               line("in_cpi_inflation_back", "India back series", SAFFRON, "dot"),
                                               line("us_cpi", "US (derived)", "#1D4ED8", df=yoy("us_cpi")),
-                                              line("ea_hicp", "Euro area (derived)", "#047857", df=yoy("ea_hicp"))],
-                       "% YoY", ("in_cpi_inflation", "us_cpi", "ea_hicp")),
+                                              line("ea_hicp", "Euro area (derived)", "#047857", df=yoy("ea_hicp")),
+                                              line("fr_hicp", "France (derived)", "#DB2777", df=yoy("fr_hicp")),
+                                              line("de_hicp", "Germany (derived)", "#CA8A04", df=yoy("de_hicp"))],
+                       "% YoY", ("in_cpi_inflation", "us_cpi", "ea_hicp", "fr_hicp", "de_hicp"),
+                       note="UK monthly CPI is not shown: no current series from our sources."),
          lambda: chart("Real GDP growth outlook (IMF projections)", [line("in_gdp_growth_imf_proj", "India", SAFFRON),
                                                                      line("us_gdp_growth_imf_proj", "US", "#1D4ED8"),
                                                                      line("cn_gdp_growth_imf_proj", "China", "#B91C1C"),
-                                                                     line("jp_gdp_growth_imf_proj", "Japan", "#7C3AED")],
+                                                                     line("jp_gdp_growth_imf_proj", "Japan", "#7C3AED"),
+                                                                     line("gb_gdp_growth_imf_proj", "UK", "#0E7490"),
+                                                                     line("fr_gdp_growth_imf_proj", "France", "#DB2777"),
+                                                                     line("de_gdp_growth_imf_proj", "Germany", "#CA8A04")],
                        "%", ("in_gdp_growth_imf_proj",)))
     pair(lambda: chart("General government debt, % of GDP (IMF)", [line("in_gov_debt_gdp", "India", SAFFRON),
                                                                    line("us_gov_debt_gdp", "US", "#1D4ED8"),
                                                                    line("cn_gov_debt_gdp", "China", "#B91C1C"),
-                                                                   line("jp_gov_debt_gdp", "Japan", "#7C3AED")],
+                                                                   line("jp_gov_debt_gdp", "Japan", "#7C3AED"),
+                                                                   line("gb_gov_debt_gdp", "UK", "#0E7490"),
+                                                                   line("fr_gov_debt_gdp", "France", "#DB2777"),
+                                                                   line("de_gov_debt_gdp", "Germany", "#CA8A04")],
                        "% of GDP", ("in_gov_debt_gdp",)),
          lambda: chart("Unemployment", [line("in_unemployment_ilo", "India (ILO)", SAFFRON), line("us_unemployment", "US", "#1D4ED8"),
                                         line("cn_unemployment_ilo", "China (ILO)", "#B91C1C"),
-                                        line("jp_unemployment", "Japan", "#7C3AED")], "%", ("in_unemployment_ilo",)))
+                                        line("jp_unemployment", "Japan", "#7C3AED"), line("gb_unemployment", "UK", "#0E7490"),
+                                        line("fr_unemployment", "France", "#DB2777"),
+                                        line("de_unemployment", "Germany", "#CA8A04")], "%", ("in_unemployment_ilo",)))
     chart("Brent crude", [line("brent", "Brent", "#92400E")], "US$ per barrel", ("brent",), height=260,
           note="India imports most of its oil, so oil prices feed into inflation, the current account and the rupee.")
 
@@ -1449,8 +1537,84 @@ def spec_jp():
     }
 
 
-COUNTRY_SPECS = {"India": spec_india, "United States": spec_us, "Euro area": spec_ea, "China": spec_cn, "Japan": spec_jp}
-VIEWS = {"India": india, "United States": united_states, "Euro area": euro_area, "China": china, "Japan": japan}
+def spec_gb():
+    gdp = yoy("gb_gdp_real", 4)
+    parts = [not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY",
+             has("gb_10y") and f"10Y gilt {last('gb_10y'):.2f}%",
+             has("gb_unemployment") and f"unemployment {last('gb_unemployment'):.1f}%"]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", "gb_gdp_real", df=gdp, unit="percent", good="up",
+                     signal=sg.growth(_first(gdp), 1, 0)),
+                 kpi("infl", "Inflation", "CPI, annual (IMF)", "gb_inflation", signal=sg.inflation_target(last("gb_inflation"))),
+                 kpi("jobs", "Unemployment", "Ages 15+, SA", "gb_unemployment", good="down",
+                     signal=sg.trend_lower_is_better(get("gb_unemployment"), 180, "unemployment")),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", "gb_gov_debt_gdp", good="down")],
+        "kpis2": [kpi("yield", "10Y gilt", "Monthly average", "gb_10y", how="bp", signal=sg.yield_move(get("gb_10y"), 60))],
+        "chart_sub": "Real GDP growth (YoY, derived) and CPI inflation (annual, IMF)",
+        "chart": (gdp, "Real GDP growth (YoY)", get("gb_inflation"), "CPI inflation (annual)", "Source: FRED, IMF."),
+        "pulse": [pulse_row("yield", "10Y gilt", "Monthly average", "gb_10y", how="bp"),
+                  pulse_row("gdp", "IMF growth projection", "Next year", "gb_gdp_growth_imf_proj",
+                            df=get("gb_gdp_growth_imf_proj").head(1)),
+                  pulse_row("scale", "Fiscal balance", "% of GDP (IMF)", "gb_gov_balance_gdp", unit="percent_of_gdp")],
+        "table": [("Real GDP growth (YoY, derived)", "gb_gdp_real", gdp, "percent", "Quarterly"),
+                  ("CPI inflation (IMF)", "gb_inflation", None, None, "Annual"),
+                  ("Unemployment rate", "gb_unemployment", None, None, "Monthly"),
+                  ("10Y gilt yield", "gb_10y", None, None, "Monthly"),
+                  ("Public debt, % of GDP (IMF)", "gb_gov_debt_gdp", None, None, "Annual")],
+        "note": " " + "; ".join(p for p in parts if p) + ". The Bank of England Bank Rate, monthly CPI and the rupee–pound "
+                "rate are not shown: no current official series from our existing sources.",
+    }
+
+
+def _spec_euro_member(code: str, name: str, bond: str):
+    p = code.lower()
+    hicp, gdp = yoy(f"{p}_hicp"), yoy(f"{p}_gdp_real", 4)
+    spread = diff("fr_10y", "de_10y")
+    parts = [not hicp.empty and f"HICP inflation {_first(hicp):.1f}% is {sg.inflation_target(_first(hicp)).text}",
+             not gdp.empty and f"real GDP growth {_first(gdp):.1f}% YoY",
+             code == "FR" and not spread.empty and f"France pays {_first(spread):.2f} pp over Germany on 10-year debt"]
+    kpis2 = [kpi("yield", f"10Y {bond}", "Monthly average", f"{p}_10y", how="bp", signal=sg.yield_move(get(f"{p}_10y"), 60))]
+    pulse = [pulse_row("yield", f"10Y {bond}", "Monthly average", f"{p}_10y", how="bp")]
+    if code == "FR":
+        kpis2.append(kpi("scale", "Spread vs Germany", "10Y OAT − Bund", "fr_10y", df=spread, unit="pp_spread", how="bp"))
+        pulse.append(pulse_row("scale", "Spread vs Germany", "10Y OAT − Bund", "fr_10y", df=spread, unit="pp_spread", how="bp"))
+    pulse += [pulse_row("gdp", "IMF growth projection", "Next year", f"{p}_gdp_growth_imf_proj",
+                        df=get(f"{p}_gdp_growth_imf_proj").head(1)),
+              pulse_row("debt", "Fiscal balance", "% of GDP (IMF)", f"{p}_gov_balance_gdp", unit="percent_of_gdp")]
+    return {
+        "kpis": [kpi("gdp", "GDP growth", "Real, YoY (derived)", f"{p}_gdp_real", df=gdp, unit="percent", good="up",
+                     signal=sg.growth(_first(gdp), 1, 0)),
+                 kpi("infl", "Inflation", "HICP, YoY (derived)", f"{p}_hicp", df=hicp, unit="percent", good="down",
+                     signal=sg.inflation_target(_first(hicp))),
+                 kpi("jobs", "Unemployment", "Ages 15+, SA", f"{p}_unemployment", good="down",
+                     signal=sg.trend_lower_is_better(get(f"{p}_unemployment"), 180, "unemployment")),
+                 kpi("debt", "Public debt", "General govt, % of GDP (IMF)", f"{p}_gov_debt_gdp", good="down")],
+        "kpis2": kpis2,
+        "chart_sub": "Real GDP growth and HICP inflation (YoY, derived)",
+        "chart": (gdp, "Real GDP growth (YoY)", hicp, "HICP inflation (YoY)", "Source: FRED (Eurostat), IMF."),
+        "pulse": pulse,
+        "table": [("Real GDP growth (YoY, derived)", f"{p}_gdp_real", gdp, "percent", "Quarterly"),
+                  ("HICP inflation (YoY, derived)", f"{p}_hicp", hicp, "percent", "Monthly"),
+                  ("Unemployment rate", f"{p}_unemployment", None, None, "Monthly"),
+                  (f"10Y {bond} yield", f"{p}_10y", None, None, "Monthly"),
+                  ("Public debt, % of GDP (IMF)", f"{p}_gov_debt_gdp", None, None, "Annual")],
+        "note": " " + "; ".join(p for p in parts if p) + f". {name} uses the euro: ECB policy rates and the ₹ per euro rate "
+                "are on the Euro area page.",
+    }
+
+
+def spec_fr():
+    return _spec_euro_member("FR", "France", "OAT")
+
+
+def spec_de():
+    return _spec_euro_member("DE", "Germany", "Bund")
+
+
+COUNTRY_SPECS = {"India": spec_india, "United States": spec_us, "Euro area": spec_ea, "China": spec_cn, "Japan": spec_jp,
+                 "United Kingdom": spec_gb, "France": spec_fr, "Germany": spec_de}
+VIEWS = {"India": india, "United States": united_states, "Euro area": euro_area, "China": china, "Japan": japan,
+         "United Kingdom": united_kingdom, "France": france, "Germany": germany}
 
 
 def countries_page():
@@ -1471,7 +1635,7 @@ def compare_page():
     st.markdown(f'<div class="ov-h"><h1>Compare</h1></div><div class="ov-sub">Same indicators side by side.</div>',
                 unsafe_allow_html=True)
     sel = st.multiselect("Countries", COUNTRY_LIST, key="compare_set")
-    codes = {{"India": "IN", "United States": "US", "Euro area": "EA", "China": "CN", "Japan": "JP"}[c] for c in sel}
+    codes = {COUNTRY_CODE[c] for c in sel}
     compare(codes)
 
 

@@ -10,7 +10,7 @@ APP = str(Path(__file__).resolve().parent.parent / "app" / "app.py")
 DATA = Path(__file__).resolve().parent.parent / "data" / "clean"
 PAGES = [":material/home: Overview", ":material/public: Countries", ":material/bar_chart: Indicators",
          ":material/compare_arrows: Compare", ":material/database: Data sources", ":material/newspaper: Daily briefing"]
-COUNTRIES = ["India", "United States", "Euro area", "China", "Japan"]
+COUNTRIES = ["India", "United States", "Euro area", "China", "Japan", "United Kingdom", "France", "Germany"]
 
 pytestmark = pytest.mark.skipif(not any(DATA.glob("*.parquet")), reason="no stored data")
 

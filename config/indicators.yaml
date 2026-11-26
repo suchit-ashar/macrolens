@@ -978,7 +978,7 @@
   source_url: https://www.imf.org/en/Publications/WEO
 
 - id: de_10y
-  country: EA
+  country: DE
   topic: bonds
   name: Germany 10-year Bund yield, % (monthly average)
   source: FRED
@@ -1643,6 +1643,225 @@
   name: Japan general government fiscal balance, % of GDP (IMF WEO)
   source: IMF
   source_series: "WEO:JPN.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+
+# ============================== UNITED KINGDOM ==============================
+# Added 2026-11-26. Not used (not current on FRED): Bank Rate (BOERUKM ends 2017), monthly CPI (ends Mar 2025),
+# 3-month interbank rate (ends Jan 2026). IMF annual inflation is used instead. No rupee-pound rate: no free
+# official source publishes it directly, and cross rates are not calculated (decision of 2026-11-24).
+- id: gb_10y
+  country: GB
+  topic: bonds
+  name: UK 10-year gilt yield, % (monthly average)
+  source: FRED
+  source_series: IRLTLT01GBM156N
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/IRLTLT01GBM156N
+
+- id: gb_unemployment
+  country: GB
+  topic: labour
+  name: UK unemployment rate, ages 15+, % (monthly, SA)
+  source: FRED
+  source_series: LRHUTTTTGBM156S
+  unit: percent
+  frequency: monthly
+  stale_after_days: 160   # OECD's monthly copy of ONS data runs ~4 months behind
+  source_url: https://fred.stlouisfed.org/series/LRHUTTTTGBM156S
+
+- id: gb_gdp_real
+  country: GB
+  topic: growth
+  name: UK real GDP, £ million (quarterly, SA)
+  source: FRED
+  source_series: NGDPRSAXDCGBQ
+  unit: gbp_million
+  frequency: quarterly
+  stale_after_days: 300   # IMF's copy of ONS GDP runs about one quarter behind ONS
+  source_url: https://fred.stlouisfed.org/series/NGDPRSAXDCGBQ
+
+- id: gb_gdp_growth_imf_proj
+  country: GB
+  topic: growth
+  name: UK real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:GBR.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: gb_inflation
+  country: GB
+  topic: inflation
+  name: UK CPI inflation, annual average % (IMF WEO)
+  source: IMF
+  source_series: "WEO:GBR.PCPIPCH.A"
+  unit: percent
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: gb_gov_debt_gdp
+  country: GB
+  topic: fiscal
+  name: UK general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:GBR.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: gb_gov_balance_gdp
+  country: GB
+  topic: fiscal
+  name: UK general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:GBR.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+
+# ============================== FRANCE ==============================
+# Added 2026-11-26. France uses the euro and ECB policy rates (see the euro area section).
+- id: fr_10y
+  country: FR
+  topic: bonds
+  name: France 10-year government bond (OAT) yield, % (monthly average)
+  source: FRED
+  source_series: IRLTLT01FRM156N
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/IRLTLT01FRM156N
+
+- id: fr_hicp
+  country: FR
+  topic: inflation
+  name: France HICP, all items (index, 2025=100)
+  source: FRED
+  source_series: CP0000FRM086NEST
+  unit: index
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/CP0000FRM086NEST
+
+- id: fr_unemployment
+  country: FR
+  topic: labour
+  name: France unemployment rate, ages 15+, % (monthly, SA)
+  source: FRED
+  source_series: LRHUTTTTFRM156S
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/LRHUTTTTFRM156S
+
+- id: fr_gdp_real
+  country: FR
+  topic: growth
+  name: France real GDP, chained 2010 euros (quarterly, SA)
+  source: FRED
+  source_series: CLVMNACSCAB1GQFR
+  unit: eur_million
+  frequency: quarterly
+  source_url: https://fred.stlouisfed.org/series/CLVMNACSCAB1GQFR
+
+- id: fr_gdp_growth_imf_proj
+  country: FR
+  topic: growth
+  name: France real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:FRA.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: fr_gov_debt_gdp
+  country: FR
+  topic: fiscal
+  name: France general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:FRA.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: fr_gov_balance_gdp
+  country: FR
+  topic: fiscal
+  name: France general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:FRA.GGXCNL_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+
+# ============================== GERMANY ==============================
+# Added 2026-11-26. The 10-year Bund yield (de_10y) is listed in the euro area section.
+- id: de_hicp
+  country: DE
+  topic: inflation
+  name: Germany HICP, all items (index, 2025=100)
+  source: FRED
+  source_series: CP0000DEM086NEST
+  unit: index
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/CP0000DEM086NEST
+
+- id: de_unemployment
+  country: DE
+  topic: labour
+  name: Germany unemployment rate, ages 15+, % (monthly, SA)
+  source: FRED
+  source_series: LRHUTTTTDEM156S
+  unit: percent
+  frequency: monthly
+  source_url: https://fred.stlouisfed.org/series/LRHUTTTTDEM156S
+
+- id: de_gdp_real
+  country: DE
+  topic: growth
+  name: Germany real GDP, chained 2010 euros (quarterly, SA)
+  source: FRED
+  source_series: CLVMNACSCAB1GQDE
+  unit: eur_million
+  frequency: quarterly
+  source_url: https://fred.stlouisfed.org/series/CLVMNACSCAB1GQDE
+
+- id: de_gdp_growth_imf_proj
+  country: DE
+  topic: growth
+  name: Germany real GDP growth, % (IMF projection)
+  source: IMF
+  source_series: "WEO:DEU.NGDP_RPCH.A:proj"
+  unit: percent
+  frequency: annual
+  projection: true
+  note: IMF projection, not actual data.
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: de_gov_debt_gdp
+  country: DE
+  topic: fiscal
+  name: Germany general government gross debt, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:DEU.GGXWDG_NGDP.A"
+  unit: percent_of_gdp
+  frequency: annual
+  source_url: https://www.imf.org/en/Publications/WEO
+
+- id: de_gov_balance_gdp
+  country: DE
+  topic: fiscal
+  name: Germany general government fiscal balance, % of GDP (IMF WEO)
+  source: IMF
+  source_series: "WEO:DEU.GGXCNL_NGDP.A"
   unit: percent_of_gdp
   frequency: annual
   source_url: https://www.imf.org/en/Publications/WEO
