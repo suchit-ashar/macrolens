@@ -577,11 +577,17 @@ def chart(title: str, traces: list, unit: str, src: tuple = (), note: str = "", 
         for i in src:
             first_by_source.setdefault(ROWS.loc[i, "source"], i)  # one link per source name, not "FRED, FRED, FRED"
         links = ", ".join(f'<a href="{ROWS.loc[i, "source_url"]}" target="_blank">{s}</a>' for s, i in first_by_source.items())
-        # On Compare a note may apply to one country only (e.g. India's fiscal years), so name the country.
+        # On Compare a note may apply to some countries only (e.g. India's fiscal years), so name them, once per note.
         names = {v: k for k, v in COUNTRY_CODE.items()}
-        notes = " ".join(dict.fromkeys(
-            (f"{names.get(ROWS.loc[i, 'country'], '')}: " if COMPARE_CODES is not None else "") + ROWS.loc[i, "note"]
-            for i in src if isinstance(ROWS.loc[i, "note"], str)))
+        by_note: dict[str, list[str]] = {}
+        for i in src:
+            if isinstance(ROWS.loc[i, "note"], str):
+                who = by_note.setdefault(ROWS.loc[i, "note"], [])
+                name = names.get(ROWS.loc[i, "country"], "")
+                if name and name not in who:
+                    who.append(name)
+        notes = " ".join((f"{', '.join(who)}: " if COMPARE_CODES is not None and who else "") + n
+                         for n, who in by_note.items())
         st.markdown(f'<div class="ml-cap">{"Source: " + links if links else ""} {notes} {note}</div>', unsafe_allow_html=True)
 
 
@@ -1589,7 +1595,7 @@ def spec_gb():
                   ("10Y gilt yield", "gb_10y", None, None, "Monthly"),
                   ("Public debt, % of GDP (IMF)", "gb_gov_debt_gdp", None, None, "Annual")],
         "note": " " + "; ".join(p for p in parts if p) + ". Not shown: the Bank of England Bank Rate and monthly CPI (no "
-                "current official series we can fetch automatically) and the rupee–pound rate (no free official source "
+                "current official series we can fetch automatically), and the rupee–pound rate (no free official source "
                 "publishes it directly; we do not calculate cross rates).",
     }
 
@@ -1597,7 +1603,7 @@ def spec_gb():
 def proj_row(iid: str) -> str:
     """Pulse row for the first IMF projection year, labelled with that year."""
     df = get(iid).head(1)
-    return pulse_row("gdp", "IMF growth projection", f"For {df['date'].iloc[0].year}" if not df.empty else "", iid, df=df)
+    return pulse_row("gdp", "IMF growth projection", "Real GDP, projection", iid, df=df)  # pulse_row adds the year
 
 
 def _spec_euro_member(code: str, name: str, bond: str):
